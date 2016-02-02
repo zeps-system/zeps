@@ -16,9 +16,9 @@
     :ez #f ; erlang compilable
     :bz #f ; llvm compilable
   }
-  dependencies [
+  dependencies (
     "csv" :any
     "html" ">0.0.1"
-  ]
-  dev-dependencies []
+  )
+  dev-dependencies ()
 }
