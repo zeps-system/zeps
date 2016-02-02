@@ -2,6 +2,8 @@
   :name "package" ; package name
   :version "0.0.1" ; package version
   :license "GPLv2" ; package license
+  :entry-point "package.zp" ; the package entry point
+  :tests "test.zp" ; the package test module
   :author #{
     :name "Veit Heller" ; author name
     :email "veit@veitheller.de" ; author email address
