@@ -1,6 +1,4 @@
 (load "vendor/cli/cli")
-(load "vendor/github/github")
-(load "vendor/semantic-versioning/sv")
 
 (load "zeps/all")
 
