@@ -2,10 +2,11 @@
 (load "vendor/github/github")
 (load "vendor/semantic-versioning/sv")
 
-(load "zeps/install")
-(load "zeps/register")
+(load "zeps/all")
+
+(import-all "zeps")
 
 (cli:add (make-hash
-            "install" (list zeps:install zeps:install-args)
+            "install"  (list zeps:install zeps:install-args)
             "register" (list zeps:register zeps:register-args)
-            "upgrade" (list zeps:upgrade zeps:upgrade-args)))
+            "upgrade"  (list zeps:upgrade zeps:upgrade-args)))
