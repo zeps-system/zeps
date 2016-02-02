@@ -1,0 +1,24 @@
+#{
+  :name "package" ; package name
+  :version "0.0.1" ; package version
+  :license "GPLv2" ; package license
+  :author #{
+    :name "Veit Heller" ; author name
+    :email "veit@veitheller.de" ; author email address
+    :github "@hellerve" ; author github handle, starting with an @
+  }
+  :location #{
+    :github "zepto-lang/package" ; location on github
+    :zpr "package" ; package name on zpr
+  }
+  :zepto #{
+    :version "1.0.0" ; necessary zepto version
+    :ez #f ; erlang compilable
+    :bz #f ; llvm compilable
+  }
+  dependencies [
+    "csv" :any
+    "html" ">0.0.1"
+  ]
+  dev-dependencies []
+}
