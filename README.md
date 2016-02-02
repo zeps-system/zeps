@@ -1,6 +1,6 @@
 # zeps
 
-zeps (the *ze*pto *p*ackage *s*ystem) is a package manager for
+zeps (the **ze**pto **p**ackage **s**ystem) is a package manager for
 zepto. It simplifies installing (for package users) and
 versioning (for package creators).
 
@@ -10,7 +10,7 @@ versioning (for package creators).
 
 The most common task for users will be installing zepto
 packages. Packages should either be uploaded and registered
-on the [zpr](https://zpr.com) (the *z*epto *p*ackage *r*egistry)
+on the [zpr](https://zpr.com) (the **z**epto **p**ackage **r**egistry)
 or published on [Github](https::/github.com).
 
 ```sh
