@@ -1,0 +1,140 @@
+(module "cli"
+  (exports
+    (list "command" command)
+    (list "create" create)
+    (list "play" play))
+
+  (ARGS-PRFX "--")
+  (ARGS-SHORT-PRFX "-")
+
+  (err-ln (lambda (msg)
+    (write msg :stderr)))
+
+  (write-help (lambda (env name)
+    (if (truthy? env)
+      (begin
+        (err-ln (++ "Usage: " name))
+        (let ((help-text (get-from env [:info :help])))
+          (if (truthy? help-text)
+            (begin
+              (err-ln "")
+              (err-ln help-text)
+              (err-ln ""))))
+        (let ((cmds (hash:kv-map  (lambda (kv)
+                      (++ "\t" (car kv) ": "
+                          (get-from (cadr kv) (list :info :help) "No Documentation")))
+                    (get-from env :commands #{}))))
+          (if (truthy? cmds)
+            (begin
+              (err-ln "Commands:")
+              (map err-ln cmds))))
+        (err-ln "Arguments:")
+        (err-ln "\t--help|-h: Show this help mesage and exit")
+        (let ((args (hash:kv-map  (lambda (kv)
+                      (let ((meta (cadr kv)))
+                      (++ "\t--" (car kv)
+                          (let ((short (get-from meta :short)))
+                            (if (truthy? short) (++ "|-" short) ""))
+                          ": " (get-from meta :help "No Documentation")
+                          " (required type: "
+                          (string:tail (->string (get-from (cadr kv) :type :string))) ") "
+                          (if (get-from :meta :required #f) "REQUIRED" ""))))
+                    (get-from env (list :info :arguments) #{}))))
+          (if (truthy? args)
+              (map err-ln args))))
+      (err-ln "No documentation for command available."))))
+
+  (die (lambda (msg env name)
+    (begin
+      (write-help env name)
+      (err-ln "")
+      (err-ln msg)
+      (exit 1))))
+
+  (convert (lambda (val type)
+    (case type
+      ((:number) (string->number val))
+      ((:string) val)
+      ((:list) (string->list val))
+      ((:vector) (list->vector (string->list val)))
+      ((:symbol) (string->symbol val))
+      ((:integer) (string->integer val))
+      ((:small) (string->small val))
+      ((:float) (string->float val))
+      ((:rational) (string->rational val))
+      ((:complex) (string->complex value))
+      ((:boolean :flag) #t)
+      (else (die (++ "[Programming error] Unknown format specifier:" (->string type)) #{} "")))))
+
+  (parse-arg (lambda (cname env args acc kv)
+    (let* ((name (++ ARGS-PRFX (car kv)))
+           (meta (cadr kv))
+           (short (++ ARGS-SHORT-PRFX (get-from meta :short "")))
+           (required (get-from meta :required #f))
+           (type (get-from meta :type :string))
+           (default (meta :default))
+           (flag (in? [:boolean :flag] type)))
+      (if (or (in? args short) (in? args name))
+          (let* ((x (get-from args (let ((init (add1 (index-of args short))))
+                                     (if (truthy? init) init (add1 (index-of args name))))))
+                 (x-invalid (or (nil? x)
+                                (string:starts-with x ARGS-SHORT-PRFX)
+                                (string:starts-with x ARGS-PRFX))))
+              (if (and x-invalid (not flag) (nil? default))
+                (die (++ "Missing argument value for argument " name) env cname)
+                (make-hash acc (make-hash (car kv) (convert (if x-invalid default x) type)))))
+          (if required
+            (die (++ "Missing required argument: " name) env cname)
+            (if flag (make-hash acc (make-hash (car kv) #f)) acc))))))
+
+  (parse-args (lambda (args env name)
+    (hash:kv-reduce (curry parse-arg name env args) (make-hash) (get-from env (list :info :arguments) #{}))))
+
+  (eval-with-args (lambda (args env name)
+      ((env :callback) (parse-args args env name))))
+
+  (command (lambda (name f info)
+    (make-hash name (make-hash :callback f :info info :type :command :commands #{}))))
+
+  (create-inner (lambda (name env commands)
+    (let ((old-state (get-from env name #{})))
+      (make-hash env
+        (make-hash name
+          (make-hash old-state
+            (make-hash :commands (create-top-level commands))))))))
+
+  (create-top-level (lambda (commands)
+    (apply make-hash commands)))
+
+  (create (lambda (commands . args)
+    (if (not (in? [0 2] (length args)))
+      (die "[Programming Error] create should be called with 1 or 3 arguments" #{} "")
+      (if (truthy? args)
+        (create-inner (car args) (cadr args) commands)
+        (create-top-level commands)))))
+
+  (play (lambda (name tenv . args) 
+    (define (internal env args traversed)
+      (let ((wrap-in-cmd (lambda (x) (make-hash :commands x))))
+        (if (or (eq? (get-from args 0 "") "--help") (eq? (get-from args 0 "") "-h"))
+          (begin
+            (write-help (wrap-in-cmd env)
+                        (string:join (cons name (reverse traversed)) #\space))
+            (exit 0))
+          (let* ((entry (get-from args 0))
+                 (pred (lambda (x) (not (or (string:starts-with x ARGS-SHORT-PRFX)
+                                            (string:starts-with x ARGS-PRFX)))))
+                 (rest (if (> (length args) 0) (cdr args) []))
+                 (next-item (pred (get-from rest 0 ARGS-PRFX))))
+            (if (truthy? entry)
+                (if (and (in? env entry) (eq? (get-from env (list entry :type)) :command))
+                  (if next-item
+                    (internal ((env entry) :commands) rest (cons entry traversed))
+                    (eval-with-args rest
+                                    (env entry)
+                                    (string:join (cons name (reverse (cons entry traversed))) #\space)))
+                  (die (++ "Unknown command " entry)
+                       (if (> (length traversed) 0) (get-from tenv traversed) (wrap-in-cmd tenv))
+                       (string:join (cons name (reverse traversed)) #\space)))
+                (die "No arguments specified." (wrap-in-cmd env) name))))))
+    (internal tenv (if (> (length args) 0) (car args) zepto:args) []))))
