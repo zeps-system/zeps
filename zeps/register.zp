@@ -1,0 +1,8 @@
+(module-extend "zeps"
+  (export
+    (list "register-info" register-info)
+    (list "register" register))
+
+  (register-info #{:help "Registers a package."})
+
+  (register (lambda (x) (write x))))

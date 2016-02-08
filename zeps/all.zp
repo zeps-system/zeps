@@ -1,4 +1,9 @@
-(module "zeps")
+(module "zeps"
+  (export
+    (list "conf" conf))
 
-(load "zeps/install.zp")
-(load "zeps/register.zp")
+  (conf #{}))
+
+(load "zeps/install")
+(load "zeps/register")
+(load "zeps/upgrade")

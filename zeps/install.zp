@@ -1,1 +1,8 @@
 (module-extend "zeps"
+  (export
+    (list "install-info" install-info)
+    (list "install" install))
+
+  (install-info #{:help "Installs a package."})
+
+  (install (lambda (x) (write x))))

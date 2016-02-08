@@ -1,10 +1,14 @@
 (load "vendor/cli/cli")
-
 (load "zeps/all")
 
+(import-all "cli")
 (import-all "zeps")
 
-(cli:add (make-hash
-            "install"  (list zeps:install zeps:install-args)
-            "register" (list zeps:register zeps:register-args)
-            "upgrade"  (list zeps:upgrade zeps:upgrade-args)))
+(define env
+  (cli:create
+    (list
+      (cli:command "install" zeps:install zeps:install-info)
+      (cli:command "register" zeps:register zeps:register-info)
+      (cli:command "upgrade"  zeps:upgrade zeps:upgrade-info))))
+
+(cli:play "zeps" env)
