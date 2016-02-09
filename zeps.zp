@@ -11,4 +11,4 @@
       (cli:command "register" zeps:register zeps:register-info)
       (cli:command "upgrade"  zeps:upgrade zeps:upgrade-info))))
 
-(cli:play "zeps" env)
+(cli:play env)

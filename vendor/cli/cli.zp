@@ -12,25 +12,11 @@
 
   (write-help (lambda (env name)
     (if (truthy? env)
-      (begin
-        (err-ln (++ "Usage: " name))
-        (let ((help-text (get-from env [:info :help])))
-          (if (truthy? help-text)
-            (begin
-              (err-ln "")
-              (err-ln help-text)
-              (err-ln ""))))
-        (let ((cmds (hash:kv-map  (lambda (kv)
-                      (++ "\t" (car kv) ": "
-                          (get-from (cadr kv) (list :info :help) "No Documentation")))
-                    (get-from env :commands #{}))))
-          (if (truthy? cmds)
-            (begin
-              (err-ln "Commands:")
-              (map err-ln cmds))))
-        (err-ln "Arguments:")
-        (err-ln "\t--help|-h: Show this help mesage and exit")
-        (let ((args (hash:kv-map  (lambda (kv)
+      (let* ((cmds (hash:kv-map  (lambda (kv)
+                    (++ "\t" (car kv) ": "
+                        (get-from (cadr kv) (list :info :help) "No Documentation")))
+                  (get-from env :commands #{})))
+             (args (hash:kv-map  (lambda (kv)
                       (let ((meta (cadr kv)))
                       (++ "\t--" (car kv)
                           (let ((short (get-from meta :short)))
@@ -39,9 +25,35 @@
                           " (required type: "
                           (string:tail (->string (get-from (cadr kv) :type :string))) ") "
                           (if (get-from :meta :required #f) "REQUIRED" ""))))
-                    (get-from env (list :info :arguments) #{}))))
-          (if (truthy? args)
-              (map err-ln args))))
+                    (get-from env (list :info :arguments) #{})))
+             (cmd-str (if (truthy? cmds)
+                          (++ "[" (string:tail
+                                    (hash:keys-reduce (lambda (acc x) (++ acc "|" x)) ""
+                                                      (get-from env :commands #{})))
+                              "]")
+                          ""))
+             (args-str (if (truthy? args)
+                          (++ "[" (string:tail
+                                    (hash:keys-reduce (lambda (acc x) (++ acc "|" x)) ""
+                                                      (get-from env (list :info :arguments) #{})))
+                              "]")
+                          "")))
+      (begin
+        (err-ln (++ "Usage: " name " " cmd-str " " args-str))
+        (let ((help-text (get-from env [:info :help])))
+          (if (truthy? help-text)
+            (begin
+              (err-ln "")
+              (err-ln help-text)
+              (err-ln ""))))
+        (if (truthy? cmds)
+          (begin
+            (err-ln "Commands:")
+            (map err-ln cmds)))
+        (err-ln "Arguments:")
+        (err-ln "\t--help|-h: Show this help message and exit")
+        (if (truthy? args)
+            (map err-ln args))))
       (err-ln "No documentation for command available."))))
 
   (die (lambda (msg env name)
@@ -113,7 +125,10 @@
         (create-inner (car args) (cadr args) commands)
         (create-top-level commands)))))
 
-  (play (lambda (name tenv . args) 
+  (play (lambda (tenv . args) 
+    (let* ((args (if (truthy? args) (car args) #{}))
+           (name (if (truthy? (args :name)) (args :name) zepto:name))
+           (args (if (truthy? (args :args)) (args :args) zepto:args)))
     (define (internal env args traversed)
       (let ((wrap-in-cmd (lambda (x) (make-hash :commands x))))
         (if (or (eq? (get-from args 0 "") "--help") (eq? (get-from args 0 "") "-h"))
@@ -137,4 +152,4 @@
                        (if (> (length traversed) 0) (get-from tenv traversed) (wrap-in-cmd tenv))
                        (string:join (cons name (reverse traversed)) #\space)))
                 (die "No arguments specified." (wrap-in-cmd env) name))))))
-    (internal tenv (if (> (length args) 0) (car args) zepto:args) []))))
+    (internal tenv args [])))))
