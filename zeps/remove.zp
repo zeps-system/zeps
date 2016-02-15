@@ -1,0 +1,19 @@
+(module-extend "zeps"
+  (export
+    (list "remove-info" remove-info)
+    (list "remove" remove))
+
+  (loads "zpbash")
+
+  (remove-info #{:help "Removes a package."
+                  :arguments (("name" "the package name"))})
+
+  (zepto:on-path (lambda (x) "dummy to test the current version of zeps"
+    #t))
+
+  (remove (lambda (name x)
+    (begin
+      (load "zpbash")
+      (if (not (zepto:on-path name))
+        (zeps:die "Package undefined:" name))
+      (bash:rm "-rf" (++ (zeps:conf :install-home) name))))))

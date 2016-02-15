@@ -3,6 +3,25 @@
     (list "upgrade-info" upgrade-info)
     (list "upgrade" upgrade))
 
-  (upgrade-info #{:help "Upgrades a package."})
+  (loads "vendor/semver/sv")
 
-  (upgrade (lambda (x) (write x))))
+  (upgrade-info #{:help "Upgrades a package."
+                  :arguments (("name" "the package name")
+                              ("version" "the version tag"))})
+
+  (zepto:on-path (lambda (x) "dummy to test the current version of zeps"
+    #t))
+
+  (upgrade (lambda (name version x)
+    (begin
+      (load "vendor/semver/sv")
+      (import-all "semver")
+      (if (not (zepto:on-path name))
+        (zeps:die "Package undefined:" name))
+      (if (not (semver:valid? version))
+        (zeps:die version "is not a valid semantic version specifier, must be of the form x.y.z"))
+      (let ((actualv (semver:parse version))
+            (expectv (semver:parse (get-from (zeps:get-package-info name) :version "0.0.0"))))
+        (if (semver:le actualv expectv)
+          (zeps:die "Installed version (" expectv ") not lower than specified version (" actualv ")")))
+      (write "upgrade done!")))))

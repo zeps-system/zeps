@@ -1,0 +1,88 @@
+(define-record-type semver:semantic-version
+  (semver:make-semantic-version major minor patch comp)
+  semver:semantic-version?
+  (major semver:get-major)
+  (minor semver:get-minor)
+  (patch semver:get-patch)
+  (comp semver:get-comp))
+
+(module "semver"
+  (export
+    (list "matches" matches)
+    (list "gt" gt)
+    (list "lt" lt)
+    (list "eq" eq)
+    (list "ne" ne)
+    (list "ge" ge)
+    (list "le" le)
+    (list "valid?" valid)
+    (list "parse" parse))
+
+  (comparators {">=" "<=" ">" "<" "==" "!="})
+
+  (matches (lambda (x y)
+    (let* ((x (if (string? x) (parse x) x))
+           (y (if (string? y) (parse y) y))
+           (constraint (let ((comp (semver:get-comp y)))
+                        (if (null? comp) eq (or (comparator-map comp) eq)))))
+      (constraint x y))))
+
+  (compare (lambda (x y op)
+    (let ((x (if (string? x) (parse x) x))
+          (y (if (string? y) (parse y) y)))
+      (or
+        (op (semver:get-major x)
+            (semver:get-major y))
+        (op (semver:get-minor x)
+            (semver:get-minor y))
+        (op (semver:get-patch x)
+            (semver:get-patch y))))))
+
+  (gt (lambda (x y) (compare x y >)))
+  (lt (lambda (x y) (compare x y <)))
+  (eq (lambda (x y)
+    (let ((x (if (string? x) (parse x) x))
+          (y (if (string? y) (parse y) y)))
+      (and
+        (= (semver:get-major x)
+           (semver:get-major y))
+        (= (semver:get-minor x)
+           (semver:get-minor y))
+        (= (semver:get-patch x)
+           (semver:get-patch y))))))
+  (ne (lambda (x y) (compare x y /=)))
+  (ge (lambda (x y) (or (eq x y) (gt x y))))
+  (le (lambda (x y) (or (eq x y) (lt x y))))
+
+  (comparator-map (make-hash ">=" ge "<=" le ">" gt "<" lt "==" eq "!=" ne))
+
+  (parse (lambda (str)
+    (let* ((split (string:split str #\.))
+           (minor (get-from split 1))
+           (patch (get-from split 2))
+           (majc (let ((m (get-from split 0)))
+              (and (truthy? m)
+                (if (string:num? m)
+                  (list (nil) m)
+                  (let* ((l (map (curry string:starts-with str)
+                                 (vector->list comparators)))
+                         (i (index-of l #t)))
+                  (if (any? truthy? l)
+                    (list 
+                      (substring m 0 (length (comparators i)))
+                      (substring m (length (comparators i)) (length m)))
+                    (list (nil) (nil))))))))
+           (major (cadr majc))
+           (comp (car majc)))
+      (if (all? (lambda (x) (and (truthy? x) (string:num? x)))
+                (list major minor patch))
+        (semver:make-semantic-version
+          (string->integer major)
+          (string->integer minor)
+          (string->integer patch)
+          comp)
+        (nil)))))
+
+  (valid (lambda (str)
+    (semver:semantic-version? (parse str)))))
+

@@ -1,5 +1,5 @@
 (module "cli"
-  (exports
+  (export
     (list "command" command)
     (list "create" create)
     (list "play" play))
@@ -16,7 +16,10 @@
                     (++ "\t" (car kv) ": "
                         (get-from (cadr kv) (list :info :help) "No Documentation")))
                   (get-from env :commands #{})))
-             (args (hash:kv-map  (lambda (kv)
+             (args (map (lambda (x) (++ "\t" (car x)
+                                        ": " (if (> (length x) 1) (cadr x) "No Documentation")))
+                        (get-from env (list :info :arguments) [])))
+             (opts (hash:kv-map  (lambda (kv)
                       (let ((meta (cadr kv)))
                       (++ "\t--" (car kv)
                           (let ((short (get-from meta :short)))
@@ -25,21 +28,25 @@
                           " (required type: "
                           (string:tail (->string (get-from (cadr kv) :type :string))) ") "
                           (if (get-from :meta :required #f) "REQUIRED" ""))))
-                    (get-from env (list :info :arguments) #{})))
+                    (get-from env (list :info :options) #{})))
              (cmd-str (if (truthy? cmds)
                           (++ "[" (string:tail
                                     (hash:keys-reduce (lambda (acc x) (++ acc "|" x)) ""
                                                       (get-from env :commands #{})))
                               "]")
                           ""))
-             (args-str (if (truthy? args)
+             (opts-str (if (truthy? opts)
                           (++ "[" (string:tail
                                     (hash:keys-reduce (lambda (acc x) (++ acc "|" x)) ""
-                                                      (get-from env (list :info :arguments) #{})))
+                                                      (get-from env (list :info :options) #{})))
                               "]")
                           "")))
       (begin
-        (err-ln (++ "Usage: " name " " cmd-str " " args-str))
+        (err-ln (++ "Usage: " name " "
+                    (string:join (map (lambda (x) (++ "<" (car x) ">"))
+                                      (get-from env (list :info :arguments) []))
+                                 #\space)
+                    cmd-str " " opts-str))
         (let ((help-text (get-from env [:info :help])))
           (if (truthy? help-text)
             (begin
@@ -50,10 +57,14 @@
           (begin
             (err-ln "Commands:")
             (map err-ln cmds)))
-        (err-ln "Arguments:")
-        (err-ln "\t--help|-h: Show this help message and exit")
         (if (truthy? args)
-            (map err-ln args))))
+          (begin
+            (err-ln "Arguments:")
+            (map err-ln args)))
+        (err-ln "Options:")
+        (err-ln "\t--help|-h: Show this help message and exit")
+        (if (truthy? opts)
+            (map err-ln opts))))
       (err-ln "No documentation for command available."))))
 
   (die (lambda (msg env name)
@@ -78,8 +89,10 @@
       ((:boolean :flag) #t)
       (else (die (++ "[Programming error] Unknown format specifier:" (->string type)) #{} "")))))
 
-  (parse-arg (lambda (cname env args acc kv)
-    (let* ((name (++ ARGS-PRFX (car kv)))
+  (parse-arg (lambda (cname env acc kv)
+    (let* ((args (car acc))
+           (acc (cadr acc))
+           (name (++ ARGS-PRFX (car kv)))
            (meta (cadr kv))
            (short (++ ARGS-SHORT-PRFX (get-from meta :short "")))
            (required (get-from meta :required #f))
@@ -87,23 +100,37 @@
            (default (meta :default))
            (flag (in? [:boolean :flag] type)))
       (if (or (in? args short) (in? args name))
-          (let* ((x (get-from args (let ((init (add1 (index-of args short))))
-                                     (if (truthy? init) init (add1 (index-of args name))))))
+          (let* ((i (let ((i (add1 (index-of args short))))
+                      (if (truthy? i) i (add1 (index-of args name)))))
+                 (x (get-from args i))
                  (x-invalid (or (nil? x)
                                 (string:starts-with x ARGS-SHORT-PRFX)
                                 (string:starts-with x ARGS-PRFX))))
               (if (and x-invalid (not flag) (nil? default))
                 (die (++ "Missing argument value for argument " name) env cname)
-                (make-hash acc (make-hash (car kv) (convert (if x-invalid default x) type)))))
+                (list (list:remove-n (list:remove (list:remove args short) name) i)
+                      (make-hash acc (make-hash (car kv) (convert (if x-invalid default x) type))))))
           (if required
             (die (++ "Missing required argument: " name) env cname)
-            (if flag (make-hash acc (make-hash (car kv) #f)) acc))))))
+            (if flag (list args (make-hash acc (make-hash (car kv) #f))) (list args acc)))))))
 
   (parse-args (lambda (args env name)
-    (hash:kv-reduce (curry parse-arg name env args) (make-hash) (get-from env (list :info :arguments) #{}))))
+    (hash:kv-reduce (curry parse-arg name env)
+                    (list args #{})
+                    (get-from env (list :info :options) #{}))))
+
+  (parse-commands (lambda (xargs env name)
+    (let* ((args (car xargs))
+           (acc (cadr xargs))
+           (expectedl (length (get-from env (list :info :arguments) [])))
+           (actuall (length args)))
+      (if (eq? expectedl actuall)
+          (apply (env :callback) (++ args acc))
+          (die (++ "Expected " (->string expectedl) " arguments, got " (->string actuall)
+                   " (values: " (->string args) ")") env name)))))
 
   (eval-with-args (lambda (args env name)
-      ((env :callback) (parse-args args env name))))
+      (parse-commands (parse-args args env name) env name)))
 
   (command (lambda (name f info)
     (make-hash name (make-hash :callback f :info info :type :command :commands #{}))))
@@ -143,7 +170,7 @@
                  (next-item (pred (get-from rest 0 ARGS-PRFX))))
             (if (truthy? entry)
                 (if (and (in? env entry) (eq? (get-from env (list entry :type)) :command))
-                  (if next-item
+                  (if (and next-item (not (truthy? (get-from env (list entry :info :arguments)))))
                     (internal ((env entry) :commands) rest (cons entry traversed))
                     (eval-with-args rest
                                     (env entry)

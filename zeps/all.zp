@@ -1,9 +1,26 @@
 (module "zeps"
   (export
+    (list "die" die)
+    (list "get-package-info" get-package-info)
     (list "conf" conf))
 
-  (conf #{}))
+  (die (lambda args
+    (begin
+      (apply error args)
+      (exit 1))))
+
+  (conf (make-hash :install-home (++ (get-home-dir) "/.zeps/")))
+  
+  (get-package-info (lambda (name)
+    (let ((path (++ (conf :install-home) name "/module.zp")))
+      (if (open-input-file path)
+        (let ((info (load path)))
+          (if (and (hash-map? info) (truthy? info))
+            info
+            (die "Package" name "has invalid module.zp file. Either fix or uninstall package.")))
+        #{})))))
 
 (load "zeps/install")
 (load "zeps/register")
 (load "zeps/upgrade")
+(load "zeps/remove")
