@@ -3,6 +3,20 @@
     (list "install-info" install-info)
     (list "install" install))
 
-  (install-info #{:help "Installs a package."})
+  (install-info #{:help "Installs a package."
+                  :arguments (("name@version"
+                               "Installs a specific version of a package. The @ character can be swapped out for any comparator (e.g. >, == or >=) or left out (will install latest version)."))})
 
-  (install (lambda (x) (write x))))
+  (parse-name-version (lambda (tuple)
+    (cond
+      ((in? tuple #\@) (++ (string:split tuple #\@) :eq))
+      ((in? tuple #\>) (++ (string:split tuple #\>) :gt))
+      ((in? tuple #\<) (++ (string:split tuple #\<) :lt))
+      ((in? tuple ">=") (++ (string:split tuple ">=") :ge))
+      ((in? tuple "<=") (++ (string:split tuple "<=") :le))
+      ((in? tuple "==") (++ (string:split tuple "==") :eq))
+      (else (zeps:die "Unparsable name-version tuple" tuple)))))
+
+  (install (lambda (name x)
+    (let ((tuple (parse-name-version name)))
+      (write (++ "installation of package " (car tuple) ", version " (cadr tuple) " done!"))))))
