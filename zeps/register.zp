@@ -3,6 +3,32 @@
     (list "register-info" register-info)
     (list "register" register))
 
-  (register-info #{:help "Registers a package."})
+  (loads "vendor/semver/sv.zp")
 
-  (register (lambda (x) (write x))))
+  (register-info #{:help "Registers a package."
+                   :options #{"directory" #{:short "d"
+                                            :help "the directory that should be registered (needs a valid module.zp file); defaults to the current directory"}}})
+
+  (register (lambda (x)
+    (let* ((directory (get-from x "directory" "."))
+           (module-path (++ directory "/module.zp")))
+      (begin
+        (import-all "semver")
+        (if (boolean? (open-input-file module-path))
+          (zeps:die "Could not open file" module-path ". Please verify that it exists."))
+        (let ((meta-inf (load module-path)))
+          (begin
+            (if (not (hash-map? meta-inf))
+              (zeps:die "Invalid module.zp file. Needs to return hash-map, got"
+                        (let ((str (->string meta-inf)))
+                          (if (< 30 (length str)) (++ (substring str 0 30) "...") str))
+                        "(type:" (typeof meta-inf)))
+            (if (not (all? (curry in? meta-inf) [:version :author :name]))
+              (zeps:die "Must specify at least package name (:name),"
+                        "version (:version) and author (:author) in module.zp"))
+            (if (or (not (string? (meta-inf :version))) (not (semver:valid? (meta-inf :version))))
+              (zeps:die "The provided version tag" (meta-inf :version) "is not valid."
+                        "Needs to be a valid semantic versionstring of the form x.y.z"))
+            (write
+              (++ "Module " (meta-inf :name) "@" (meta-inf :version)
+                  " by " (meta-inf :author) " registered!")))))))))

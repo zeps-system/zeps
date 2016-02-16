@@ -27,7 +27,7 @@
                           ": " (get-from meta :help "No Documentation")
                           " (required type: "
                           (string:tail (->string (get-from (cadr kv) :type :string))) ") "
-                          (if (get-from :meta :required #f) "REQUIRED" ""))))
+                          (if (get-from meta :required #f) "REQUIRED" ""))))
                     (get-from env (list :info :options) #{})))
              (cmd-str (if (truthy? cmds)
                           (++ "[" (string:tail

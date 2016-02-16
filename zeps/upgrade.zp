@@ -3,7 +3,7 @@
     (list "upgrade-info" upgrade-info)
     (list "upgrade" upgrade))
 
-  (loads "vendor/semver/sv")
+  (loads "vendor/semver/sv.zp")
 
   (upgrade-info #{:help "Upgrades a package."
                   :arguments (("name" "the package name")
@@ -14,7 +14,6 @@
 
   (upgrade (lambda (name version x)
     (begin
-      (load "vendor/semver/sv")
       (import-all "semver")
       (if (not (zepto:on-path name))
         (zeps:die "Package undefined:" name))
