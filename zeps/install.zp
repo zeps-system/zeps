@@ -18,5 +18,7 @@
       (else (zeps:die "Unparsable name-version tuple" tuple)))))
 
   (install (lambda (name x)
-    (let ((tuple (parse-name-version name)))
-      (write (++ "installation of package " (car tuple) ", version " (cadr tuple) " done!"))))))
+    (let* ((tuple (parse-name-version name))
+           (pname (car tuple))
+           (versn (cadr tuple)))
+      (write (++ "installation of package " pname ", version " version " done!"))))))
