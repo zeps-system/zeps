@@ -23,19 +23,17 @@
       (bash:command "cp" (list "-r" "." (++ (zeps:conf :install-home) name))))))
 
   (install (lambda (name x)
-    (begin
-      (load "vendor/semver/sv.zp")
-      (let* ((tuple   (parse-name-version name))
-             (pname   (car tuple))
-             (version (semver:parse (cadr tuple)))
-             (pred    (caddr tuple))
-             (lmod    (if (open-input-file "module.zp") (zeps:read-module ".") #{})))
-        (if (and (eq? pname (lmod :name))
-                 (pred (semver:parse (lmod :version)) version))
-          (begin
-            (zeps:status "Found local package that matches the version constraint")
-            (move pname)
-            (zeps:create-entry lmod)
-            (zeps:success (++ "installation of package " pname ", version " (->string version) " done!")))
-          (begin
-            (zeps:status "Searching the package database"))))))))
+    (let* ((tuple   (parse-name-version name))
+           (pname   (car tuple))
+           (version (semver:parse (cadr tuple)))
+           (pred    (caddr tuple))
+           (lmod    (if (open-input-file "module.zp") (zeps:read-module ".") #{})))
+      (if (and (eq? pname (lmod :name))
+               (pred (semver:parse (lmod :version)) version))
+        (begin
+          (zeps:status "Found local package that matches the version constraint")
+          (move pname)
+          (zeps:create-entry lmod)
+          (zeps:success (++ "installation of package " pname ", version " (->string version) " done!")))
+        (begin
+          (zeps:status "Searching the package database")))))))
