@@ -22,6 +22,16 @@
       (load "zpbash")
       (bash:command "cp" (list "-r" "." (++ (zeps:conf :install-home) name))))))
 
+  (install-internal (lambda (lmod)
+    (begin
+      (if (in? lmod :before-install)
+        (let () (load (lmod :before-install))))
+      (move (lmod :name))
+      (if (eq? (lmod :type) :tool)
+        (zeps:create-entry lmod))
+      (zeps:success (++ "installation of package " (lmod :name)
+                        ", version " (lmod :version) " done!")))))
+
   (install (lambda (name x)
     (let* ((tuple   (parse-name-version name))
            (pname   (car tuple))
@@ -32,8 +42,6 @@
                (pred (semver:parse (lmod :version)) version))
         (begin
           (zeps:status "Found local package that matches the version constraint")
-          (move pname)
-          (zeps:create-entry lmod)
-          (zeps:success (++ "installation of package " pname ", version " (->string version) " done!")))
+          (install-internal lmod))
         (begin
           (zeps:status "Searching the package database")))))))

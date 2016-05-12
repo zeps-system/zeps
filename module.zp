@@ -2,7 +2,9 @@
   :version "0.0.1" 
   :license "GPLv2" 
   :entry-point "zeps.zp" 
+  :type :tool
   :tests []
+  :before-install "configure.zp"
   :author #{:name "Veit Heller" 
             :email "veit@veitheller.de" 
             :github "@hellerve"}
