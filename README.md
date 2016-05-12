@@ -1,5 +1,7 @@
 # zeps
 
+![](http://g.recordit.co/RC7OAMIAXe.gif)
+
 zeps (the **ze**pto **p**ackage **s**ystem) is a package manager for
 zepto. It simplifies installing (for package users) and
 versioning (for package creators).
