@@ -1,7 +1,7 @@
-(load "vendor/cli/cli")
-(load "vendor/semver/sv.zp")
+(load "zeps/vendor/cli/cli")
+(load "zeps/vendor/semver/sv.zp")
 (import-all "semver")
-(load "zeps/all")
+(load "zeps/zeps/all")
 
 
 (import-all "cli")
