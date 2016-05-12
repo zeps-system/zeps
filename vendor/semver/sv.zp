@@ -27,19 +27,24 @@
                         (if (null? comp) eq (or (comparator-map comp) eq)))))
       (constraint x y))))
 
-  (compare (lambda (x y op)
+  (gt (lambda (x y)
     (let ((x (if (string? x) (parse x) x))
           (y (if (string? y) (parse y) y)))
-      (or
-        (op (semver:get-major x)
-            (semver:get-major y))
-        (op (semver:get-minor x)
-            (semver:get-minor y))
-        (op (semver:get-patch x)
-            (semver:get-patch y))))))
-
-  (gt (lambda (x y) (compare x y >)))
-  (lt (lambda (x y) (compare x y <)))
+      (if (> (semver:get-major x)
+             (semver:get-major y))
+        #t
+        (if (< (semver:get-major x)
+               (semver:get-major y))
+          #f
+          (if (> (semver:get-minor x)
+                 (semver:get-minor y))
+            #t
+            (if (< (semver:get-minor x)
+                   (semver:get-minor y))
+              #f
+              (> (semver:get-patch x)
+                 (semver:get-patch y)))))))))
+  (lt (lambda (x y) (not (or (gt x y) (eq x y)))))
   (eq (lambda (x y)
     (let ((x (if (string? x) (parse x) x))
           (y (if (string? y) (parse y) y)))
@@ -50,7 +55,7 @@
            (semver:get-minor y))
         (= (semver:get-patch x)
            (semver:get-patch y))))))
-  (ne (lambda (x y) (compare x y /=)))
+  (ne (lambda (x y) (not (eq x y))))
   (ge (lambda (x y) (or (eq x y) (gt x y))))
   (le (lambda (x y) (or (eq x y) (lt x y))))
 
@@ -86,3 +91,12 @@
   (valid (lambda (str)
     (semver:semantic-version? (parse str)))))
 
+(import-all "semver")
+(defimpl ord semver:semantic-version?
+  ((compare (lambda (x y) (if (semver:eq x y) 0 (if (semver:lt x y) -1 1))))))
+(defimpl stringify semver:semantic-version?
+  ((->string
+    (lambda (s)
+      (++ (->string (semver:get-major s)) "."
+          (->string (semver:get-minor s)) "."
+          (->string (semver:get-patch s)))))))

@@ -1,24 +1,80 @@
 (module "zeps"
   (export
     (list "die" die)
+    (list "status" status)
+    (list "success" success)
     (list "get-package-info" get-package-info)
+    (list "read-module" read-module)
+    (list "create-entry" create-entry)
     (list "conf" conf))
 
-  (die (lambda args
-    (begin
-      (apply error args)
-      (exit 1))))
+  (PRELUDE "if [[ -z \"$@\" ]]; then
+    D=\"[]\"
+else
+D=\"[\"
+for arg in $@; do
+  D=$D\\\"$arg\\\"\\ 
+done
+D=${D%?}\"]\"
+fi")
 
-  (conf (make-hash :install-home (++ (get-home-dir) "/.zeps/")))
-  
-  (get-package-info (lambda (name)
-    (let ((path (++ (conf :install-home) name "/module.zp")))
+  (create-entry (lambda (lmod)
+    (define (template path name)
+      (++ "\"(begin (define zepto:name \\\"" name "\\\") (define zepto:args $D)
+                    (zepto:add-to-path \\\"" path "/\\\") (load \\\"" name "\\\"))\""))
+    (let* ((path (zeps:conf :install-home))
+           (name (++ path (lmod :name)))
+           (script (++ name "-script"))
+           (file (open-output-file script)))
+      (begin
+        (write PRELUDE file)
+        (write (++ "zepto -s " (template name (++ name "/" (get-from lmod :entry-point "main.zp"))))
+               file)
+        (close-output-file file)
+        (bash:command "ln" (list "-s" script (++ "/usr/local/bin/" (lmod :name))))
+        (bash:command "chmod" (list "u+x" script))))))
+
+  (read-module (lambda (name)
+    (let ((path (++ name "/module.zp")))
       (if (open-input-file path)
         (let ((info (load path)))
           (if (and (hash-map? info) (truthy? info))
             info
             (die "Package" name "has invalid module.zp file. Either fix or uninstall package.")))
-        #{})))))
+        (die "Could not open file" path)))))
+
+  (die (lambda args
+    (define (err args)
+      (define (esc n) (++ (++ "" (integer->char 27)) "[" (number->string n) "m"))
+      (begin
+        (display (esc 31))
+        (display "Fatal: ")
+        (display (esc 0) :flush)
+        (for-each (lambda (x) (begin (display x :stderr) (display " " :stderr))) args)
+        (write "")))
+    (begin
+      (err args)
+      (exit 1))))
+
+  (success (lambda args
+    (begin
+      (color :green)
+      (display "Success: ")
+      (color :reset)
+      (write (apply ++ args))
+      (exit 0))))
+
+  (status (lambda args
+    (begin
+      (color :yellow)
+      (display "Info: ")
+      (color :reset)
+      (write (apply ++ args)))))
+
+  (conf (make-hash :install-home (++ (get-home-dir) "/.zeps/")))
+  
+  (get-package-info (lambda (name)
+    (read-module (++ (conf :install-home) name "/module.zp")))))
 
 (load "zeps/install")
 (load "zeps/register")
