@@ -4,6 +4,8 @@
     (list "install" install))
 
   (install-info #{:help "Installs a package."
+                  :options #{"path" #{:short "p"
+                                      :usage "optional package location"}}
                   :arguments (("name@version"
                                "Installs a specific version of a package. The @ character can be swapped out for any comparator (e.g. >, == or >=) or left out (will install latest version)."))})
 
@@ -33,15 +35,25 @@
                         ", version " (lmod :version) " done!")))))
 
   (install (lambda (name x)
-    (let* ((tuple   (parse-name-version name))
-           (pname   (car tuple))
-           (version (semver:parse (cadr tuple)))
-           (pred    (caddr tuple))
-           (lmod    (if (open-input-file "module.zp") (zeps:read-module ".") #{})))
-      (if (and (eq? pname (lmod :name))
-               (pred (semver:parse (lmod :version)) version))
-        (begin
-          (zeps:status "Found local package that matches the version constraint")
-          (install-internal lmod))
-        (begin
-          (zeps:status "Searching the package database")))))))
+    (define (try-local)
+      (let ((path (get-from x "path" ".")))
+        (if (open-input-file (++ path "/module.zp"))
+          (zeps:read-module path)
+          #{})))
+    (if (or (eq? name ".") (in? x :path))
+      (let ((lmod (try-local)))
+        (if (truthy? lmod)
+          (install-internal lmod)
+          (zeps:die "Wanted directory is not a zepto module.")))
+      (let* ((tuple   (parse-name-version name))
+             (pname   (car tuple))
+             (version (semver:parse (cadr tuple)))
+             (pred    (caddr tuple))
+             (lmod    (try-local)))
+        (if (and (eq? pname (lmod :name))
+                 (pred (semver:parse (lmod :version)) version))
+          (begin
+            (zeps:status "Found local package that matches the version constraint")
+            (install-internal lmod))
+          (begin
+            (zeps:status "Searching the package database"))))))))

@@ -108,7 +108,7 @@
                                 (string:starts-with x ARGS-PRFX))))
               (if (and x-invalid (not flag) (nil? default))
                 (die (++ "Missing argument value for argument " name) env cname)
-                (list (list:remove-n (list:remove (list:remove args short) name) i)
+                (list (list:remove-n (list:remove (list:remove args short) name) (sub1 i))
                       (make-hash acc (make-hash (car kv) (convert (if x-invalid default x) type))))))
           (if required
             (die (++ "Missing required argument: " name) env cname)
