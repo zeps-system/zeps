@@ -1,6 +1,7 @@
 (module "zeps"
   (export
     (list "die" die)
+    (list "warning" warning)
     (list "status" status)
     (list "success" success)
     (list "get-package-info" get-package-info)
@@ -55,6 +56,13 @@ fi")
     (begin
       (err args)
       (exit 1))))
+
+  (warning (lambda args
+    (begin
+      (color :red)
+      (display "Warning: ")
+      (color :reset)
+      (write (apply ++ args)))))
 
   (success (lambda args
     (begin

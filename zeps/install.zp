@@ -27,6 +27,9 @@
 
   (install-internal (lambda (lmod args)
     (begin
+      (if (in? args "as")
+        (zeps:warning "This will not override any previous non-aliased install of " (lmod :name)
+                      ". Remove it by issuing `zeps remove " (lmod :name) "`."))
       (if (in? lmod :before-install)
         (let () (load (lmod :before-install))))
       (move (get-from args "as" (lmod :name)))
