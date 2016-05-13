@@ -18,7 +18,7 @@
       ((in? tuple #\>) (++ (string:split tuple #\>) gt))
       ((in? tuple #\<) (++ (string:split tuple #\<) lt))
       ((in? tuple "==") (++ (string:split tuple "==") eq))
-      (else (zeps:die "Unparsable name-version tuple" tuple)))))
+      (else (zeps:die "Unparsable name-version tuple " tuple ".")))))
 
   (move (lambda (name)
     (begin
@@ -58,7 +58,7 @@
         (if (and (eq? pname (lmod :name))
                  (pred (semver:parse (lmod :version)) version))
           (begin
-            (zeps:status "Found local package that matches the version constraint")
+            (zeps:status "Found local package that matches the version constraint.")
             (install-internal lmod x))
           (begin
-            (zeps:status "Searching the package database"))))))))
+            (zeps:status "Searching the package database..."))))))))

@@ -41,8 +41,8 @@ fi")
         (let ((info (load path)))
           (if (and (hash-map? info) (truthy? info))
             info
-            (die "Package" name "has invalid module.zp file. Either fix or uninstall package.")))
-        (die "Could not open file" path)))))
+            (die "Package " name " has invalid module.zp file. Either fix or uninstall package.")))
+        (die "Could not open file " path ".")))))
 
   (die (lambda args
     (define (err args)
@@ -51,7 +51,7 @@ fi")
         (display (esc 31))
         (display "Fatal: ")
         (display (esc 0) :flush)
-        (for-each (lambda (x) (begin (display x :stderr) (display " " :stderr))) args)
+        (for-each (lambda (x) (display x :stderr)) args)
         (write "")))
     (begin
       (err args)
