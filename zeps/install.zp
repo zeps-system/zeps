@@ -5,7 +5,8 @@
 
   (install-info #{:help "Installs a package."
                   :options #{"path" #{:short "p"
-                                      :usage "optional package location"}}
+                                      :usage "optional package location"}
+                             "as" #{:usage "optional package alias"}}
                   :arguments (("name@version"
                                "Installs a specific version of a package. The @ character can be swapped out for any comparator (e.g. >, == or >=) or left out (will install latest version)."))})
 
@@ -24,14 +25,15 @@
       (load "zpbash")
       (bash:command "cp" (list "-r" "." (++ (zeps:conf :install-home) name))))))
 
-  (install-internal (lambda (lmod)
+  (install-internal (lambda (lmod args)
     (begin
       (if (in? lmod :before-install)
         (let () (load (lmod :before-install))))
-      (move (lmod :name))
+      (move (get-from args "as" (lmod :name)))
       (if (eq? (lmod :type) :tool)
-        (zeps:create-entry lmod))
+        (zeps:create-entry (hash:update lmod :name (lambda (name) (get-from args "as" name)))))
       (zeps:success (++ "installation of package " (lmod :name)
+                        (if (in? args "as") (++ " (as " (args "as") ")") "")
                         ", version " (lmod :version) " done!")))))
 
   (install (lambda (name x)
@@ -43,7 +45,7 @@
     (if (or (eq? name ".") (in? x :path))
       (let ((lmod (try-local)))
         (if (truthy? lmod)
-          (install-internal lmod)
+          (install-internal lmod x)
           (zeps:die "Wanted directory is not a zepto module.")))
       (let* ((tuple   (parse-name-version name))
              (pname   (car tuple))
@@ -54,6 +56,6 @@
                  (pred (semver:parse (lmod :version)) version))
           (begin
             (zeps:status "Found local package that matches the version constraint")
-            (install-internal lmod))
+            (install-internal lmod x))
           (begin
             (zeps:status "Searching the package database"))))))))
