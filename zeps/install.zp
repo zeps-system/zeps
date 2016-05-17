@@ -6,7 +6,10 @@
   (install-info #{:help "Installs a package."
                   :options #{"path" #{:short "p"
                                       :usage "optional package location"}
-                             "as" #{:usage "optional package alias"}}
+                             "as" #{:usage "optional package alias"}
+                             "force" #{:type :boolean
+                                       :short "f"
+                                       :usage "forces installation of package"}}
                   :arguments (("name@version"
                                "Installs a specific version of a package. The @ character can be swapped out for any comparator (e.g. >, == or >=) or left out (will install latest version)."))})
 
@@ -27,6 +30,12 @@
 
   (install-internal (lambda (lmod args)
     (begin
+      (if (truthy? (lmod :dependencies))
+        (begin
+          (zeps:status "Installing dependencies for package " (lmod :name) ".")
+          (zeps:no-exit #t)
+          (map (lambda (x) (begin (zeps:status "Installing " x "...") (install x args)))
+               (lmod :dependencies))))
       (if (in? args "as")
         (zeps:warning "This will not override any previous non-aliased install of " (lmod :name)
                       ". Remove it by issuing `zeps remove " (lmod :name) "`."))
@@ -55,10 +64,12 @@
              (version (semver:parse (cadr tuple)))
              (pred    (caddr tuple))
              (lmod    (try-local)))
-        (if (and (eq? pname (lmod :name))
-                 (pred (semver:parse (lmod :version)) version))
-          (begin
-            (zeps:status "Found local package that matches the version constraint.")
-            (install-internal lmod x))
-          (begin
-            (zeps:status "Searching the package database..."))))))))
+        (if (and (zeps:installed? (++ (zeps:conf :install-home) pname) version pred) (not (x "force")))
+          (zeps:success "Package " pname ", version " (->string version) " already installed.")
+          (if (and (eq? pname (lmod :name))
+                   (pred (semver:parse (lmod :version)) version))
+            (begin
+              (zeps:status "Found local package that matches the version constraint.")
+              (install-internal lmod x))
+            (begin
+              (zeps:status "Searching the package database...")))))))))
