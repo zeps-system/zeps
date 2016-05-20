@@ -1,0 +1,17 @@
+(module-extend "zeps"
+  (export
+    (list "repl-info" repl-info)
+    (list "repl" repl-))
+
+  (repl-info #{:help "Launches an interactive shell with the module loaded."
+                  :arguments (("name" "the package name"))})
+
+  (repl- (lambda (name x)
+    (let ((conf (zeps:read-module (++ (zeps:conf :install-home) name))))
+      (begin
+        (zeps:status "Loading module " name "...")
+        (load (++ name "/" (get-from conf :entry-point name)))
+        (import-all name)
+        (zeps:status "Launching shell...")
+        (load "repl")
+        (repl (current-env)))))))
