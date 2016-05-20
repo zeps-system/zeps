@@ -99,7 +99,8 @@ fi")
       (color :reset)
       (write (apply ++ args)))))
 
-  (conf (make-hash :install-home (++ (get-home-dir) "/.zeps/")))
+  (conf (make-hash :install-home (++ (get-home-dir) "/.zeps/")
+                   :github-url "https://github.com/"))
   
   (get-package-info (lambda (name)
     (read-module (++ (conf :install-home) name "/module.zp")))))
