@@ -39,6 +39,5 @@
                         "Needs to be a valid semantic versionstring of the form x.y.z"))
             (if github
               (publish-to-github directory meta-inf))
-            (write
-              (++ "Module " (meta-inf :name) "@" (meta-inf :version)
-                  " by " (get-from meta-inf [:author :name] "Anonymous") " registered!")))))))))
+            (zeps:success "Module " (meta-inf :name) "@" (meta-inf :version) " by "
+                          (get-from meta-inf [:author :name] "Anonymous") " registered!"))))))))
