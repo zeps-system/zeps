@@ -5,10 +5,21 @@
 
   (register-info #{:help "Registers a package."
                    :options #{"directory" #{:short "d"
-                                            :help "the directory that should be registered (needs a valid module.zp file); defaults to the current directory"}}})
+                                            :help "the directory that should be registered (needs a valid module.zp file); defaults to the current directory"}
+                              "github" #{:short "g"
+                                         :type :boolean
+                                         :help "whether the package should be published to Github. Defaults to false."}}})
+
+  (publish-to-github (lambda (dir info)
+    (begin
+      (zepto:change-dir dir)
+      (system "git" (list "tag" (info :version)))
+      (system "git" (list "push" "--tags"))
+      (nil))))
 
   (register (lambda (x)
     (let* ((directory (get-from x "directory" "."))
+           (github (get-from x "github" false))
            (module-path (++ directory "/module.zp")))
       (begin
         (if (boolean? (open-input-file module-path))
@@ -26,6 +37,8 @@
             (if (or (not (string? (meta-inf :version))) (not (semver:valid? (meta-inf :version))))
               (zeps:die "The provided version tag" (meta-inf :version) "is not valid."
                         "Needs to be a valid semantic versionstring of the form x.y.z"))
+            (if github
+              (publish-to-github directory meta-inf))
             (write
               (++ "Module " (meta-inf :name) "@" (meta-inf :version)
-                  " by " (meta-inf :author) " registered!")))))))))
+                  " by " (get-from meta-inf [:author :name] "Anonymous") " registered!")))))))))
