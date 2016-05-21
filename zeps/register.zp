@@ -23,19 +23,19 @@
            (module-path (++ directory "/module.zp")))
       (begin
         (if (boolean? (open-input-file module-path))
-          (zeps:die "Could not open file" module-path ". Please verify that it exists."))
+          (zeps:die "Could not open file " module-path ". Please verify that it exists."))
         (let ((meta-inf (load module-path)))
           (begin
             (if (not (hash-map? meta-inf))
-              (zeps:die "Invalid module.zp file. Needs to return hash-map, got"
+              (zeps:die "Invalid module.zp file. Needs to return hash-map, got "
                         (let ((str (->string meta-inf)))
                           (if (< 30 (length str)) (++ (substring str 0 30) "...") str))
-                        "(type:" (typeof meta-inf)))
+                        " (type: " (typeof meta-inf)))
             (if (not (all? (curry in? meta-inf) [:version :author :name]))
-              (zeps:die "Must specify at least package name (:name),"
+              (zeps:die "Must specify at least package name (:name), "
                         "version (:version) and author (:author) in module.zp"))
             (if (or (not (string? (meta-inf :version))) (not (semver:valid? (meta-inf :version))))
-              (zeps:die "The provided version tag" (meta-inf :version) "is not valid."
+              (zeps:die "The provided version tag " (meta-inf :version) " is not valid."
                         "Needs to be a valid semantic versionstring of the form x.y.z"))
             (if github
               (publish-to-github directory meta-inf))

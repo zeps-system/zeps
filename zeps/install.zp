@@ -62,7 +62,8 @@
         (if (not (eq? 0 (car clone)))
           (begin
             (system "rm" (list "-rf" rnd-tmp))
-            (zeps:die "Cloning the repository " name " failed. Please check whether the repository exists."))
+            (zeps:die "Cloning the repository " name
+            " failed. Please check whether the repository exists."))
           (zeps:status "Cloned the repository " name "."))
         (zeps:status "Checking for requested version (" (->string version) ")...")
         (zepto:change-dir rnd-tmp)
@@ -78,6 +79,7 @@
           (zeps:warning (caddr out))
           (write (cadr out)))
         (zepto:change-dir "..")
+        (system "rm" (list "-rf" rnd-tmp))
         (nil)))))
 
   (install (lambda (name x)
