@@ -16,7 +16,6 @@
         (with-output-file (++ prefix "zeps_id.pub")
                           (lambda (f)
                             (begin
-                              (write (rsa:key-bits key) f)
                               (write (rsa:key-n key) f)
                               (write (rsa:key-e key) f))))
         (with-output-file (++ prefix "zeps_id")
