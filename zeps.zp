@@ -18,4 +18,4 @@
       (cli:command "new" zeps:new zeps:new-info)
       (cli:command "upgrade"  zeps:upgrade zeps:upgrade-info))))
 
-(cli:play env)
+(cli:play env #{:name "zeps"})
