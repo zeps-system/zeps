@@ -32,6 +32,6 @@
     (begin
       (load "rsa/rsa")
       (import-all "rsa")
-      (zeps:status "Generating key, this might take a few minutes...")
+      (zeps:status "Generating key, this might take up to a few minutes...")
       (let ((key (rsa:key-gen (get-from args "size" 2048))))
         (write-key key))))))
