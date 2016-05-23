@@ -6,7 +6,19 @@
   (repl-info #{:help "Launches an interactive shell with the module loaded."
                :arguments (("name" "the package name"))})
 
-  (repl- (lambda (name x)
+  (find-local (lambda (name)
+    (let ((conf (zeps:read-module ".")))
+      (if (eq? (conf :name) name)
+        (begin
+          (zeps:status "Loading module " name "...")
+          (load (get-from conf :entry-point name))
+          (if (in? *modules* name) (import-all name))
+          (zeps:status "Launching shell...")
+          (load "repl")
+          (repl (current-env)))
+        (find-global "name")))))
+
+  (find-global (lambda (name)
     (let ((conf (zeps:read-module (++ (zeps:conf :install-home) name))))
       (begin
         (if (not (eq? name "zeps"))
@@ -16,4 +28,9 @@
             (if (in? *modules* name) (import-all name))))
         (zeps:status "Launching shell...")
         (load "repl")
-        (repl (current-env)))))))
+        (repl (current-env))))))
+
+  (repl- (lambda (name x)
+    (if (file-exists? "module.zp")
+      (find-local name)
+      (find-global name)))))

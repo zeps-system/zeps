@@ -14,6 +14,8 @@
       (cli:command "repl" zeps:repl zeps:repl-info)
       (cli:command "remove" zeps:remove zeps:remove-info)
       (cli:command "register" zeps:register zeps:register-info)
+      (cli:command "keygen" zeps:keygen zeps:keygen-info)
+      (cli:command "new" zeps:new zeps:new-info)
       (cli:command "upgrade"  zeps:upgrade zeps:upgrade-info))))
 
 (cli:play env)

@@ -1,0 +1,38 @@
+(module-extend "zeps"
+  (export
+    `("keygen" ,keygen)
+    `("keygen-info" ,keygen-info))
+
+  (keygen-info #{:help "Generates a new RSA key for zeps."
+                 :options #{"size" #{:short "s"
+                                     :type :integer
+                                     :help "Key size (defaults to 2048)"}}})
+
+  (write-key (lambda (key)
+    (let ((prefix (++ (get-home-dir) "/.zeps/.ssh/")))
+      (begin
+        (system "mkdir" (list "-p" prefix))
+        (zeps:status "Writing keys...")
+        (with-output-file (++ prefix "zeps_id.pub")
+                          (lambda (f)
+                            (begin
+                              (write (rsa:key-bits key) f)
+                              (write (rsa:key-n key) f)
+                              (write (rsa:key-e key) f))))
+        (with-output-file (++ prefix "zeps_id")
+                          (lambda (f)
+                            (begin
+                              (write (rsa:key-bits key) f)
+                              (write (rsa:key-n key) f)
+                              (write (rsa:key-e key) f)
+                              (write (rsa:key-d key) f))))
+        (zeps:success "New SSH keys generated!")))))
+
+
+  (keygen (lambda (args)
+    (begin
+      (load "rsa/rsa")
+      (import-all "rsa")
+      (zeps:status "Generating key, this might take a few minutes...")
+      (let ((key (rsa:key-gen (get-from args "size" 2048))))
+        (write-key key))))))
