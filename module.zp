@@ -5,6 +5,7 @@
   :type :tool
   :tests []
   :before-install "configure.zp"
+  :after-install "reminder.zp"
   :author #{:name "Veit Heller" 
             :email "veit@veitheller.de" 
             :github "@hellerve"}

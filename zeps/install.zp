@@ -44,6 +44,8 @@
       (move (get-from args "as" (lmod :name)))
       (if (eq? (lmod :type) :tool)
         (zeps:create-entry (hash:update lmod :name (lambda (name) (get-from args "as" name)))))
+      (if (in? lmod :after-install)
+        (let () (load (lmod :after-install))))
       (zeps:success (++ "installation of package " (lmod :name)
                         (if (in? args "as") (++ " (as " (args "as") ")") "")
                         ", version " (lmod :version) " done!")))))

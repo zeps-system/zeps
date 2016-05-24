@@ -1,0 +1,25 @@
+(module-extend "zeps"
+  (export
+    `("highlight-code" ,highlight))
+
+  (highlight (lambda (str)
+    (let ((col (lambda (x) (color x #{:to-str #t}))))
+      (let loop ((str str) (acc ""))
+        (if (null? str)
+          acc
+          (case (car str)
+            ((#\{ #\} #\[ #\] #\)) =>
+              (lambda (char) (loop (cdr str) (++ acc (col :magenta) (string char) (col :reset)))))
+            ((#\()
+                (let* ((i (index-of str #\space))
+                       (j (index-of str #\)))
+                       (i (if (< j i) j i))
+                       (hd (substring str 1 (if (> i 0) i (length str))))
+                       (tl (substring str (if (> i 0) i (length str)) (length str))))
+                  (loop tl (++ acc (col :magenta) "(" (col :bold) (col :cyan) hd (col :reset)))))
+            ((#\")
+                (let* ((i (add1 (index-of (cdr str) #\")))
+                       (hd (substring str 0 (add1 (if (> i 0) i (length str)))))
+                       (tl (substring (cdr str) (if (> i 0) i (length str)) (length str))))
+                  (loop tl (++ acc (escape-sequence "38;5;208" #t (nil)) hd (col :reset)))))
+            (else => (lambda (char) (loop (cdr str) (++ acc char)))))))))))

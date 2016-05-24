@@ -1,0 +1,3 @@
+(zeps:status "Please think of adding zeps to your path, for instance by adding the line\n\t "
+             (zeps:highlight-code "(zepto:add-to-path (++ (get-home-dir) \"/.zeps/\"))")
+             "\n      to your .zeptorc.")
