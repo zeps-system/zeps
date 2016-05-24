@@ -23,10 +23,10 @@
       ((in? tuple "==") (++ (string:split tuple "==") eq))
       (else (zeps:die "Unparsable name-version tuple " tuple ".")))))
 
-  (move (lambda (name)
+  (move (lambda (name path)
     (begin
       (load "zpbash")
-      (bash:command "cp" (list "-r" "." (++ (zeps:conf :install-home) name))))))
+      (bash:command "cp" (list "-r" path (++ (zeps:conf :install-home) name))))))
 
   (install-internal (lambda (lmod args)
     (begin
@@ -41,7 +41,7 @@
                       ". Remove it by issuing `zeps remove " (lmod :name) "`."))
       (if (in? lmod :before-install)
         (let () (load (lmod :before-install))))
-      (move (get-from args "as" (lmod :name)))
+      (move (get-from args "as" (lmod :name)) (get-from lmod "path" "."))
       (if (eq? (lmod :type) :tool)
         (zeps:create-entry (hash:update lmod :name (lambda (name) (get-from args "as" name)))))
       (if (in? lmod :after-install)
