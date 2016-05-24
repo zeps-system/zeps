@@ -6,6 +6,13 @@ zeps (the **ze**pto **p**ackage **s**ystem) is a package manager for
 zepto. It simplifies installing (for package users) and
 versioning (for package creators).
 
+## Installation
+
+```sh
+git clone https://github.com/hellerve/zeps
+zepto zeps/zeps install . --path zeps
+```
+
 ## Usage
 
 ### Installing Packages
@@ -20,6 +27,7 @@ or published on [Github](https::/github.com).
 zeps install html # this will install the newest version of the html package on zpr
 zeps install zepto-lang/html # this will do the same thing, but from Github
 zeps install html==1.0.0 # this will install version 1.0.0 of the html package
+zeps install . # this will install the module in the current directory
 ```
 
 Github-installed packages follow the convention of `<owner>/<repo>`.

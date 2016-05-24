@@ -41,7 +41,7 @@
                       ". Remove it by issuing `zeps remove " (lmod :name) "`."))
       (if (in? lmod :before-install)
         (let () (load (lmod :before-install))))
-      (move (get-from args "as" (lmod :name)) (get-from lmod "path" "."))
+      (move (get-from args "as" (lmod :name)) (get-from args "path" "."))
       (if (eq? (lmod :type) :tool)
         (zeps:create-entry (hash:update lmod :name (lambda (name) (get-from args "as" name)))))
       (if (in? lmod :after-install)
