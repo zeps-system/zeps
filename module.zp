@@ -4,8 +4,8 @@
   :entry-point "zeps.zp" 
   :type :tool
   :tests []
-  :before-install "configure.zp"
-  :after-install "reminder.zp"
+  :before-install "zeps/configure.zp"
+  :after-install "zeps/reminder.zp"
   :author #{:name "Veit Heller" 
             :email "veit@veitheller.de" 
             :github "@hellerve"}
