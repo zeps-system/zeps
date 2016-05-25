@@ -77,27 +77,22 @@ fi")
       (err args)
       (exit 1))))
 
-  (warning (lambda args
+  (colorized-message (lambda (col msg . args)
     (begin
-      (color :red)
-      (display "Warning: ")
+      (color :bold)
+      (color col)
+      (display msg)
       (color :reset)
       (write (apply ++ args)))))
+
+  (warning (curry colorized-message :red "Warning: "))
 
   (success (lambda args
     (begin
-      (color :green)
-      (display "Success: ")
-      (color :reset)
-      (write (apply ++ args))
+      (apply colorized-message (cons :green (cons "Success: " args)))
       (if ex (exit 0)))))
 
-  (status (lambda args
-    (begin
-      (color :yellow)
-      (display "Info: ")
-      (color :reset)
-      (write (apply ++ args)))))
+  (status (curry colorized-message :yellow "Info: "))
 
   (conf (make-hash :install-home (++ (get-home-dir) "/.zeps/")
                    :github-url "https://github.com/"))
