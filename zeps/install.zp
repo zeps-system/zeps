@@ -13,6 +13,13 @@
                   :arguments (("name@version"
                                "Installs a specific version of a package. The @ character can be swapped out for any comparator (e.g. >, == or >=) or left out (will install latest version)."))})
 
+  (comparators [#\@
+                ">="
+                "<="
+                #\>
+                #\<
+                "=="])
+
   (parse-name-version (lambda (tuple)
     (cond
       ((in? tuple #\@) (++ (string:split tuple #\@) eq))
@@ -67,53 +74,73 @@
             (zeps:die "Cloning the repository " name
             " failed. Please check whether the repository exists."))
           (zeps:status "Cloned the repository " name "."))
-        (zeps:status "Checking for requested version (" (->string version) ")...")
+        (zeps:status "Checking for requested version ("
+                     (if (eq? :latest version) "latest" (->string version)) 
+                     ")...")
         (zepto:change-dir rnd-tmp)
-        (define tag (system "git" (list "checkout" (++ "tags/" (->string version)))))
+        (define vsn (if (eq? :latest version)
+          (string:trim (cadr (system "git"
+                        `("describe" "--tags"
+                          ,(string:trim (cadr (system "git" ["rev-list" "--tags" "--max-count=1"])))))))
+          version))
+        (define tag (system "git" (list "checkout" (++ "tags/" (->string vsn)))))
         (if (not (eq? 0 (car tag)))
           (begin
-            (system "rm" (list "-rf" rnd-tmp))
-            (zeps:die "Version " (->string version) " does not exist in git tags."))
-          (zeps:status "Checked out version " (->string version) " of package " name "."))
+            (zepto:change-dir "..")
+            (system "rm" `("-rf" ,rnd-tmp))
+            (zeps:die "Version " (->string vsn) " does not exist in git tags."))
+          (zeps:status "Checked out version " (->string vsn) " of package " name "."))
         (zeps:status "Installing...")
-        (define out (system "zeps" (list "install" ".")))
+        (define out (system "zeps" ["install" "."]))
         (if (truthy? (caddr out))
           (zeps:warning (caddr out))
           (write (cadr out)))
         (zepto:change-dir "..")
-        (system "rm" (list "-rf" rnd-tmp))
+        (system "rm" `("-rf" ,rnd-tmp))
         (nil)))))
 
+  (configure (lambda (version? name args)
+    (let* ((tuple   (if version? (parse-name-version name) (list name :latest eq)))
+           (pname   (car tuple))
+           (gitfree (car (string:split pname #\/)))
+           (gituser (get-from (string:split pname #\/) 1 ""))
+           (version (if version? (semver:parse (cadr tuple)) :latest))
+           (pred    (caddr tuple))
+           (lmod    (try-local args)))
+      (if (and (not version?)
+               (zeps:installed? gitfree version pred)
+               (not (x "force")))
+        (zeps:success "Package " pname ", version " (->string version) " already installed.")
+        (cond
+          ((not (eq? gitfree pname))
+            (begin
+              (zeps:status "Trying to install package " gitfree " from " gituser "...")
+              (git-install pname version)))
+          ((and (eq? pname (lmod :name))
+                version?
+                (pred (semver:parse (lmod :version)) version))
+            (begin
+              (zeps:status "Found local package that matches the version constraint.")
+              (install-internal lmod x)))
+          (else
+            (begin
+              (zeps:status "Searching the package database..."))))))))
+
+  (try-local (lambda (args)
+    (let ((path (get-from args "path" ".")))
+      (if (open-input-file (++ path "/module.zp"))
+        (zeps:read-module path)
+        #{}))))
+
   (install (lambda (name x)
-    (define (try-local)
-      (let ((path (get-from x "path" ".")))
-        (if (open-input-file (++ path "/module.zp"))
-          (zeps:read-module path)
-          #{})))
     (if (or (eq? name ".") (in? x :path))
-      (let ((lmod (try-local)))
+      (let ((lmod (try-local x)))
         (if (truthy? lmod)
           (install-internal lmod x)
           (zeps:die "Wanted directory is not a zepto module.")))
-      (let* ((tuple   (parse-name-version name))
-             (pname   (car tuple))
-             (gitfree (car (string:split pname #\/)))
-             (gituser (get-from (string:split pname #\/) 1 ""))
-             (version (semver:parse (cadr tuple)))
-             (pred    (caddr tuple))
-             (lmod    (try-local)))
-        (if (and (zeps:installed? (++ (zeps:conf :install-home) gitfree) version pred) (not (x "force")))
-          (zeps:success "Package " pname ", version " (->string version) " already installed.")
-          (cond
-            ((not (eq? gitfree pname))
-              (begin
-                (zeps:status "Trying to install package " gitfree " from " gituser "...")
-                (git-install pname version)))
-            ((and (eq? pname (lmod :name))
-                  (pred (semver:parse (lmod :version)) version))
-              (begin
-                (zeps:status "Found local package that matches the version constraint.")
-                (install-internal lmod x)))
-            (else
-              (begin
-                (zeps:status "Searching the package database..."))))))))))
+      (if (not (any? (lambda (x) (in? name x)) comparators))
+        (begin
+          (zeps:status "No version information found.")
+          (zeps:status "Trying to install latest version of the package...")
+          (configure #f name x))
+        (configure #t name x))))))

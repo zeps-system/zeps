@@ -16,19 +16,27 @@
           (zeps:status "Launching shell...")
           (load "repl")
           (repl (current-env)))
-        (find-global "name")))))
+        (find-global name)))))
 
   (find-global (lambda (name)
-    (let ((conf (zeps:read-module (++ (zeps:conf :install-home) name))))
-      (begin
-        (if (not (eq? name "zeps"))
-          (begin
-            (zeps:status "Loading module " name "...")
-            (load (++ name "/" (get-from conf :entry-point name)))
-            (if (in? *modules* name) (import-all name))))
-        (zeps:status "Launching shell...")
-        (load "repl")
-        (repl (current-env))))))
+    (begin
+      (define package-name (list:last (string:split name #\/)))
+      (if (not (zeps:installed? package-name (semver:parse "0.0.0") gt))
+        (begin
+          (zeps:warning "The package " name " is not installed on this machine.")
+          (if (zeps:prompt "Should it be installed?")
+            (zeps:install name #{})
+            (zeps:die "Aborting."))))
+      (let ((conf (zeps:get-package-info package-name)))
+        (begin
+          (if (not (eq? package-name "zeps"))
+            (begin
+              (zeps:status "Loading module " name "...")
+              (load (++ package-name "/" (get-from conf :entry-point package-name)))
+              (if (in? *modules* package-name) (import-all package-name))))
+          (zeps:status "Launching shell...")
+          (load "repl")
+          (repl (current-env)))))))
 
   (repl- (lambda (name x)
     (if (file-exists? "module.zp")

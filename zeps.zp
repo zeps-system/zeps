@@ -11,6 +11,7 @@
   (cli:create
     (list
       (cli:command "install" zeps:install zeps:install-info)
+      (cli:command "help" zeps:help zeps:help-info)
       (cli:command "repl" zeps:repl zeps:repl-info)
       (cli:command "remove" zeps:remove zeps:remove-info)
       (cli:command "register" zeps:register zeps:register-info)
