@@ -1,3 +1,6 @@
 (let ((dir (++ (get-home-dir) "/.zeps")))
   (if (eq? 1 (car (system "ls" (list dir))))
     (system "mkdir" (list dir))))
+(let ((f (++ (get-home-dir) "/.zepsrc")))
+  (if (eq? 1 (car (system "cat" (list f))))
+    (with-output-file f (lambda (f) (write "#{}" f)))))

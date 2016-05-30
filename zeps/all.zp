@@ -61,9 +61,10 @@ fi")
             (die "Package " name " has invalid module.zp file. Either fix or uninstall package.")))
         (die "Could not open file " path ".")))))
 
-  (installed? (lambda (name version pred)
+  (installed? (lambda (name . vp)
     (let ((info (_read-module (++ (conf :install-home) name))))
-      (and (truthy? info) (pred (semver:parse (info :version)) version)))))
+      (and (truthy? info) (if (not (null? vp))
+                          ((cadr vp) (semver:parse (info :version)) (car vp)) #t)))))
 
   (prompt (lambda (prompt)
     (begin
@@ -104,8 +105,10 @@ fi")
 
   (status (curry colorized-message :yellow "Info: "))
 
-  (conf (make-hash :install-home (++ (get-home-dir) "/.zeps/")
-                   :github-url "https://github.com/"))
+  (conf
+    (let ((initial (make-hash :install-home (++ (get-home-dir) "/.zeps/")
+                              :github-url "https://github.com/")))
+      (hash:merge initial (load (++ (get-home-dir) "/.zepsrc")))))
   
   (get-package-info (lambda (name)
     (read-module (++ (conf :install-home) name)))))
@@ -119,3 +122,4 @@ fi")
 (load "zeps/zeps/new")
 (load "zeps/zeps/highlight")
 (load "zeps/zeps/help")
+(load "zeps/zeps/test")
