@@ -1,0 +1,48 @@
+(module-extend "zeps"
+  (export
+    (list "test-info" test-info)
+    (list "test" test))
+
+  (test-info #{:help "Runs the module tests."
+               :arguments (("module-name" "the module to test (can be \".\")"))
+               :option #{"path" #{:short "p"
+                                  :help "an optional path to the tests (defaults to tests/)"}
+                         "verbose" #{:short "v"
+                                     :type :boolean
+                                     :help "makes the output verbose"}
+                         "nocolor" #{:short "c"
+                                     :type :boolean
+                                     :help "prevent colored output"}}})
+
+  (test-file (lambda (env path file)
+    (let ((fp (++ path file)))
+      (begin
+        (zeps:status "Running file " fp)
+        (write "------------------------")
+        (load fp env)
+        (write "------------------------")))))
+
+  (test (lambda (module-name args)
+    (let ((path  (++ (if (eq? module-name ".")
+                        ""
+                        (++ (zeps:conf :install-home) module-name "/"))
+                     (get-from args "path" "tests/")))
+          (minfo (if (eq? module-name ".") (zeps:read-module ".") (zeps:get-package-info module-name))))
+      (begin
+        (load "minitest/minitest")
+        (import-all "minitest")
+        (minitest:colorize (not (or (get-from args "nocolor" #f)
+                                    (not (get-from zeps:conf :color-tests #f)))))
+        (minitest:verbose (or (get-from args "verbose" #f)
+                              (get-from zeps:conf :verbose-tests #f)))
+        (let ((name (get-from minfo :name))
+              (env (current-env)))
+          (begin
+            (load (++ (if (eq? module-name ".") "" (++ name "/")) (get-from minfo :entry-point name)))
+            (if (in? *modules* name)
+              (import-all name name env))))
+        (let ((files (string:split (cadr (system "ls" `(,path))) #\newline)))
+          (begin
+            (map (curry test-file (current-env) path) files)
+            (zeps:status "Ran tests from " (->string (length files)) " files.")
+            (minitest:results))))))))
