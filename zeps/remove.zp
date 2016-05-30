@@ -12,7 +12,7 @@
       (eq? 0 (car (system "test" (list "-f" (++ x "/module.zp"))))))))
 
   (remove (lambda (name x)
-    (let ((fname (++ (zeps:conf :install-home) name)))
+    (let ((fname (++ ((zeps:get-conf) :install-home) name)))
       (begin
         (load "zpbash")
         (if (not (zepto:on-path fname))

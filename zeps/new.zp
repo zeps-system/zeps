@@ -13,7 +13,7 @@
                            "Where to build the new project."))})
   
   (new (lambda (name project args)
-    (if (file-exists? (++ (zeps:conf :install-home) name "/module.zp"))
+    (if (file-exists? (++ ((zeps:get-conf) :install-home) name "/module.zp"))
       (let ((info (zeps:get-package-info name)))
         (begin
           (if (not (eq? (info :type) :template))
@@ -22,7 +22,7 @@
           (system "mkdir" (list "-p" project))
           (zepto:change-dir project)
           (let ((zeps:get-template (lambda (template)
-                  (read-contents (++ (zeps:conf :install-home) name "/templates/" template))))
+                  (read-contents (++ ((zeps:get-conf) :install-home) name "/templates/" template))))
                 (zeps:build-template (lambda (file-name contents)
                   (begin
                     (zeps:status "Creating file " project "/" file-name ".")

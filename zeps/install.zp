@@ -33,7 +33,7 @@
   (move (lambda (name path)
     (begin
       (load "zpbash")
-      (bash:command "cp" (list "-r" path (++ (zeps:conf :install-home) name))))))
+      (bash:command "cp" (list "-r" path (++ ((zeps:get-conf) :install-home) name))))))
 
   (install-internal (lambda (lmod args)
     (begin
@@ -67,7 +67,7 @@
           (current-dir (cadr (system "pwd"))))
       (begin
         (zeps:status "Cloning repository...")
-        (define clone (system "git" (list "clone" (++ (zeps:conf :github-url) name) rnd-tmp)))
+        (define clone (system "git" (list "clone" (++ ((zeps:get-conf) :github-url) name) rnd-tmp)))
         (if (not (eq? 0 (car clone)))
           (begin
             (system "rm" (list "-rf" rnd-tmp))
@@ -91,10 +91,8 @@
             (zeps:die "Version " (->string vsn) " does not exist in git tags."))
           (zeps:status "Checked out version " (->string vsn) " of package " name "."))
         (zeps:status "Installing...")
-        (define out (system "zeps" ["install" "."]))
-        (if (truthy? (caddr out))
-          (zeps:warning (caddr out))
-          (write (cadr out)))
+        (zeps:no-exit #t)
+        (install "." #{} (zeps:get-conf))
         (zepto:change-dir "..")
         (system "rm" `("-rf" ,rnd-tmp))
         (nil)))))
@@ -132,15 +130,17 @@
         (zeps:read-module path)
         #{}))))
 
-  (install (lambda (name x)
-    (if (or (eq? name ".") (in? x :path))
-      (let ((lmod (try-local x)))
-        (if (truthy? lmod)
-          (install-internal lmod x)
-          (zeps:die "Wanted directory is not a zepto module.")))
-      (if (not (any? (lambda (x) (in? name x)) comparators))
-        (begin
-          (zeps:status "No version information found.")
-          (zeps:status "Trying to install latest version of the package...")
-          (configure #f name x))
-        (configure #t name x))))))
+  (install (lambda (name x . conf)
+    (begin
+      (if (not (null? conf)) (zeps:set-conf (car conf)))
+      (if (or (eq? name ".") (in? x :path))
+        (let ((lmod (try-local x)))
+          (if (truthy? lmod)
+            (install-internal lmod x)
+            (zeps:die "Wanted directory is not a zepto module.")))
+        (if (not (any? (lambda (x) (in? name x)) comparators))
+          (begin
+            (zeps:status "No version information found.")
+            (zeps:status "Trying to install latest version of the package...")
+            (configure #f name x))
+          (configure #t name x)))))))

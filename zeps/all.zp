@@ -7,19 +7,21 @@
     (list "prompt" prompt)
     (list "installed?" installed?)
     (list "no-exit" no-exit)
+    (list "update-conf" update-conf)
+    (list "set-conf" set-conf)
     (list "get-package-info" get-package-info)
     (list "read-module" read-module)
     (list "create-entry" create-entry)
-    (list "conf" conf))
+    (list "get-conf" get-conf))
 
   (PRELUDE "if [[ -z \"$@\" ]]; then
     D=\"[]\"
 else
-D=\"[\"
-for arg in $@; do
-  D=$D\\\"$arg\\\"\\ 
-done
-D=${D%?}\"]\"
+  D=\"[\"
+  for arg in $@; do
+    D=$D\\\"$arg\\\"\\ 
+  done
+  D=${D%?}\"]\"
 fi")
 
   (ex #t)
@@ -31,7 +33,7 @@ fi")
     (define (template path name)
       (++ "\"(begin (define zepto:name \\\"" name "\\\") (define zepto:args $D)
                     (load \\\"" name "\\\"))\""))
-    (let* ((path (zeps:conf :install-home))
+    (let* ((path ((get-conf) :install-home))
            (name (++ path (lmod :name)))
            (script (++ name "-script"))
            (file (open-output-file script)))
@@ -105,10 +107,17 @@ fi")
 
   (status (curry colorized-message :yellow "Info: "))
 
+  (get-conf (lambda () conf))
+
   (conf
     (let ((initial (make-hash :install-home (++ (get-home-dir) "/.zeps/")
                               :github-url "https://github.com/")))
       (hash:merge initial (load (++ (get-home-dir) "/.zepsrc")))))
+
+  (set-conf (lambda (nconf) (set! conf nconf)))
+  
+  (update-conf (lambda (n v)
+    (set! conf (hash:set conf n v))))
   
   (get-package-info (lambda (name)
     (read-module (++ (conf :install-home) name)))))
@@ -123,3 +132,4 @@ fi")
 (load "zeps/zeps/highlight")
 (load "zeps/zeps/help")
 (load "zeps/zeps/test")
+(load "zeps/zeps/sandbox")

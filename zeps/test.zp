@@ -25,16 +25,16 @@
   (test (lambda (module-name args)
     (let ((path  (++ (if (eq? module-name ".")
                         ""
-                        (++ (zeps:conf :install-home) module-name "/"))
+                        (++ ((zeps:get-conf) :install-home) module-name "/"))
                      (get-from args "path" "tests/")))
           (minfo (if (eq? module-name ".") (zeps:read-module ".") (zeps:get-package-info module-name))))
       (begin
         (load "minitest/minitest")
         (import-all "minitest")
         (minitest:colorize (not (or (get-from args "nocolor" #f)
-                                    (not (get-from zeps:conf :color-tests #f)))))
+                                    (not (get-from (zeps:get-conf) :color-tests #f)))))
         (minitest:verbose (or (get-from args "verbose" #f)
-                              (get-from zeps:conf :verbose-tests #f)))
+                              (get-from (zeps:get-conf) :verbose-tests #f)))
         (let ((name (get-from minfo :name))
               (env (current-env)))
           (begin
