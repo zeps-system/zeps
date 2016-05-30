@@ -9,7 +9,7 @@
                                      :help "Key size (defaults to 2048)"}}})
 
   (write-key (lambda (key)
-    (let ((prefix (++ (get-home-dir) "/.zeps/.ssh/")))
+    (let ((prefix (++ ((zeps:get-conf) :install-home) ".keys/")))
       (begin
         (system "mkdir" (list "-p" prefix))
         (zeps:status "Writing keys...")

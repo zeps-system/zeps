@@ -39,5 +39,7 @@
                         "Needs to be a valid semantic versionstring of the form x.y.z"))
             (if github
               (publish-to-github directory meta-inf))
+            (if (not (file-exists? (++ ((zeps:get-conf) :install-home) ".keys/")))
+              (zeps:warning "No signature keys generated, cannot sign package. If you want to sign your packages, please run `zeps keygen`."))
             (zeps:success "Module " (meta-inf :name) "@" (meta-inf :version) " by "
                           (get-from meta-inf [:author :name] "Anonymous") " registered!"))))))))
