@@ -1,0 +1,29 @@
+(module-extend "zeps"
+  (export
+    (list "search-info" search-info)
+    (list "search" search))
+
+  (search-info #{:help "Search for packages matching a search term."
+                  :arguments (("search" "the search term"))})
+
+  (search (lambda (name x)
+    (begin
+      (load "request/request")
+      (load "json/json")
+      (import-all "request")
+      (let ((res (request:get (++ ((zeps:get-conf) :zpr-url) "packages/search/" name))))
+        (case (res :status)
+          ((200)
+            (let ((packages (json:parse (res :body))))
+              (if (null? packages)
+                (zeps:status "No package matching the term " name " found.")
+                (map (lambda (package)
+                       (write (++ (package "name") ": "
+                                  (get-from package "description" "No description")
+                                  " (Last update: " (package "updated_at") ")")))
+                     packages))))
+          ((404)
+            (zeps:status "No package matching the term " name " found."))
+          (else =>
+            (lambda (status) (zeps:die "The API returned HTTP " status)))))
+      (zeps:success "Search finished.")))))
