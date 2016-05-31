@@ -111,7 +111,8 @@ fi")
 
   (conf
     (let ((initial (make-hash :install-home (++ (get-home-dir) "/.zeps/")
-                              :github-url "https://github.com/")))
+                              :github-url "https://github.com/"
+                              :zpr-url "https://zpr.zepto.com/")))
       (hash:merge initial (load (++ (get-home-dir) "/.zepsrc")))))
 
   (set-conf (lambda (nconf) (set! conf nconf)))
@@ -133,3 +134,4 @@ fi")
 (load "zeps/zeps/help")
 (load "zeps/zeps/test")
 (load "zeps/zeps/sandbox")
+(load "zeps/zeps/search")

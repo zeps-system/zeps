@@ -6,16 +6,11 @@
   (remove-info #{:help "Removes a package."
                   :arguments (("name" "the package name"))})
 
-  (zepto:on-path (lambda (x) "dummy to test the current version of zeps"
-    (and
-      (eq? 0 (car (system "test" (list "-d" x))))
-      (eq? 0 (car (system "test" (list "-f" (++ x "/module.zp"))))))))
-
   (remove (lambda (name x)
     (let ((fname (++ ((zeps:get-conf) :install-home) name)))
       (begin
         (load "zpbash")
-        (if (not (zepto:on-path fname))
+        (if (not (zeps:installed? name))
           (zeps:die "Package undefined: " name "."))
         (bash:rm "-rf" fname)
         (bash:rm "-rf" (++ fname "-script"))
