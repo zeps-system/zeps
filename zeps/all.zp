@@ -5,6 +5,7 @@
     (list "status" status)
     (list "success" success)
     (list "prompt" prompt)
+    (list "input" input)
     (list "installed?" installed?)
     (list "no-exit" no-exit)
     (list "update-conf" update-conf)
@@ -76,6 +77,13 @@ fi")
           (write "")
           i)))))
 
+  (input (lambda (input . dflt)
+    (begin
+      (display (++ input "[" (->string (get-from dflt 0 "no default")) "] ") :flush)
+      (let ((line (read-line)))
+        (if (truthy? line)
+          line
+          (get-from dflt 0 (nil)))))))
 
   (die (lambda args
     (define (err args)
@@ -135,3 +143,4 @@ fi")
 (load "zeps/zeps/test")
 (load "zeps/zeps/sandbox")
 (load "zeps/zeps/search")
+(load "zeps/zeps/run")

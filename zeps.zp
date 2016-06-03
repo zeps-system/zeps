@@ -20,6 +20,7 @@
       (cli:command "search" zeps:search zeps:search-info)
       (cli:command "keygen" zeps:keygen zeps:keygen-info)
       (cli:command "new" zeps:new zeps:new-info)
+      (cli:command "run" zeps:run zeps:run-info)
       (cli:command "upgrade"  zeps:upgrade zeps:upgrade-info))))
 
 (cli:play env #{:name "zeps"})
