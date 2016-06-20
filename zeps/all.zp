@@ -15,6 +15,8 @@
     (list "create-entry" create-entry)
     (list "get-conf" get-conf))
 
+  (loads "readline")
+
   (PRELUDE "if [[ -z \"$@\" ]]; then
     D=\"[]\"
 else
@@ -79,10 +81,10 @@ fi")
 
   (input (lambda (input . dflt)
     (begin
-      (display (++ input "[" (->string (get-from dflt 0 "no default")) "] ") :flush)
-      (let ((line (read-line)))
+      (let* ((prompt (++ input "[" (->string (get-from dflt 0 "no default")) "] "))
+              (line ((import "readline:readline") prompt)))
         (if (truthy? line)
-          line
+          (if (eq? "abort" line) (begin (die "Aborted.")) line)
           (get-from dflt 0 (nil)))))))
 
   (die (lambda args
