@@ -3,14 +3,18 @@
     (list "search-info" search-info)
     (list "search" search))
 
+  (loads "vendor/request/request"
+         "json/json")
+
   (search-info #{:help "Search for packages matching a search term."
                   :arguments (("search" "the search term"))})
 
   (search (lambda (name x)
     (begin
-      (load "request/request")
-      (load "json/json")
       (import-all "request")
+      (let ((try (catch-vm-error `(request:get ,((zeps:get-conf) :zpr-url)))))
+        (if (string:starts-with try "getAddrInfo: ")
+          (zeps:die "Could not contact zpr server. Got the error message: " try)))
       (let ((res (request:get (++ ((zeps:get-conf) :zpr-url) "packages/search/" name))))
         (case (res :status)
           ((200)
