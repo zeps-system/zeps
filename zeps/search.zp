@@ -3,7 +3,7 @@
     (list "search-info" search-info)
     (list "search" search))
 
-  (loads "vendor/request/request"
+  (loads "zeps/vendor/request/request"
          "json/json")
 
   (search-info #{:help "Search for packages matching a search term."
