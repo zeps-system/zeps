@@ -1,0 +1,134 @@
+(module "request"
+  (export
+    (list "set-buffer-size!" set-buffer-size)
+    (list "set-default-headers!" set-default-headers)
+    (list "set-follow-redirects!" set-follow-redirects)
+    (list "request" request)
+    (list "head" head)
+    (list "get" get)
+    (list "put" put)
+    (list "post" post)
+    (list "delete" delete))
+
+  (BSIZE (make-small 1024))
+  (DFLT-HEADERS (make-hash "User-Agent" (++ "zepto-" zepto:version-str)))
+  (FOLLOW-REDIRECTS #f)
+
+  (set-buffer-size (lambda (nsize)
+    (set! BSIZE nsize)))
+
+  (set-default-headers (lambda (headers)
+    (set! DFLT-HEADERS headers)))
+
+  (set-follow-redirects (lambda (flag)
+    (set! FOLLOW-REDIRECTS flag)))
+
+  (end-request (lambda (res sock)
+    (begin
+      (net:close-socket sock)
+      (if (and (in? [302 301] (res :status)) FOLLOW-REDIRECTS)
+        (request ((res :request) :scheme) ((res :headers) "Location") ((res :request) :headers))
+        res))))
+
+  (parse-request (lambda (req scheme path req-headers complete sock)
+    (let* ((split (string:split req "\r\n\r\n"))
+           (headers (string:split (car split) "\r\n"))
+           (body (if (> (length split) 1) (string:join (cdr split) #\newline) ""))
+           (status-ln (string:split (get-from headers 0 "") #\space))
+           (http-version (car status-ln))
+           (status (cadr status-ln))
+           (message (caddr status-ln))
+           (split-headers (lambda (acc v) (make-hash acc (string:split v ": "))))
+           (headers (reduce split-headers #{} (if (> (length headers) 1) (cdr headers) [])))
+           (res (make-hash :headers headers
+                           :body body
+                           :status (string->integer status)
+                           :http http-version
+                           :path path
+                           :request (make-hash :scheme scheme
+                                               :headers req-headers)
+                           :status-message message)))
+      (if complete
+        (end-request res sock)
+        res))))
+
+  (chunked (lambda (sock req)
+    (let* ((body (req :body))
+           (split (string:split body "\r\n"))
+           (num (car split))
+           (size (string->number (++ "#x" (if (truthy? num) num "0"))))
+           (diff (- size (- (length body) (+ (length num) 4)))))
+      (if (eq? size 0)
+        (end-request req sock)
+        (let loop ((acc (string:join (cdr split) #\newline))
+                   (cur (byte-vector->string (net:recv sock (make-small diff))))
+                   (size diff))
+          (if (>= (length cur) size)
+            (let* ((chunk (substring cur 0 size))
+                   (trail (substring cur size (length cur)))
+                   (next (++ trail (byte-vector->string (net:recv sock BSIZE))))
+                   (split (string:split next "\r\n"))
+                   (num (car split))
+                   (next (substring next (+ (length num) 2) (length next)))
+                   (size (+ (string->number (++ "#x" num)) 2)))
+              (if (eq? size 2)
+                (end-request (hash:set req :body (++ acc chunk)) sock)
+                (loop (++ acc chunk) next size)))
+            (loop acc
+                  (++ cur (byte-vector->string (net:recv sock (make-small (- size (length cur))))))
+                  size)))))))
+
+  (request (lambda (scheme path opts)
+    (let* ((path (if (string:starts-with path "http://") (substring path 7 (length path)) path))
+           (path (if (string:starts-with path "https://") (substring path 8 (length path)) path))
+           (split (string:split path #\/))
+           (location (string:join (cdr split) #\/))
+           (host+port (car split))
+           (split (string:split host+port #\:))
+           (host (car split))
+           (port (get-from split 1 "80"))
+           (req-headers (get-from opts :headers DFLT-HEADERS))
+           (body (get-from opts :body ""))
+           (headers (hash:kv-reduce
+                      (lambda (acc kv) (++ acc (->string (car kv)) ": " (->string (cadr kv)) "\r\n"))
+                      ""
+                      req-headers))
+           (text (++ scheme " /" location " HTTP/1.1\r\nHost: " host+port "\r\n" headers "\r\n\r\n"
+                     (if (truthy? body) (++ body "\r\n\r\n") body)))
+           (sock (net:socket "stream")))
+      (begin
+        (net:connect sock (net:get-addr-info host port))
+        (net:send sock (string->byte-vector text))
+        (let loop ((recvd (net:recv sock BSIZE))
+                   (bytes b{})
+                   (cur 0)
+                   (len -1))
+          (if (eq? len -1)
+            (let* ((nrecvd (++ bytes recvd))
+                   (req (parse-request (byte-vector->string nrecvd) scheme path req-headers #f sock))
+                   (headers (get-from req :headers #{}))
+                   (l (get-from headers "Content-Length")))
+              (if (and (eq? l (nil)) (not (eq? headers #{})))
+                (if (in? (headers "Transfer-Encoding") "chunked")
+                  (chunked sock req)
+                  (loop (net:recv sock BSIZE) nrecvd (length nrecvd) 0))
+                (loop recvd bytes (length recvd) (string->number l))))
+            (let* ((ncur (+ cur (length recvd))))
+              (if (>= ncur len)
+                (parse-request (byte-vector->string (++ bytes recvd)) scheme path req-headers #t sock)
+              (loop (net:recv sock (min BSIZE (- len cur))) (++ bytes recvd) ncur len)))))))))
+
+  (head (lambda (path . opts)
+    (request "HEAD" path (get-from opts 0 #{}))))
+
+  (get (lambda (path . opts)
+    (request "GET" path (get-from opts 0 #{}))))
+
+  (post (lambda (path . opts)
+    (request "POST" path (get-from opts 0 #{}))))
+
+  (put (lambda (path . opts)
+    (request "PUT" path (get-from opts 0 #{}))))
+
+  (delete (lambda (path . opts)
+    (request "DELETE" path (get-from opts 0 #{})))))
