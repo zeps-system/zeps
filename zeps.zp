@@ -1,11 +1,10 @@
 (load "zeps/vendor/cli/cli")
 (load "zeps/vendor/semver/sv.zp")
-(import-all "semver")
 (load "zeps/zeps/all")
-
 
 (import-all "cli")
 (import-all "zeps")
+(import-all "semver")
 
 (define env
   (cli:create
@@ -23,4 +22,10 @@
       (cli:command "run" zeps:run zeps:run-info)
       (cli:command "upgrade"  zeps:upgrade zeps:upgrade-info))))
 
-(cli:play env #{:name "zeps"})
+(define parsed-module (parse (++ ((zeps:get-conf) :install-home) "zeps/module.zp")))
+(define self-info (get-from parsed-module [0 :version]))
+
+(define args  (make-hash :name    "zeps"
+                         :version self-info))
+
+(cli:play env args)
