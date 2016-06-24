@@ -10,16 +10,22 @@
   (cli:create
     (list
       (cli:command "install" zeps:install zeps:install-info)
+      (cli:command "i" zeps:install zeps:install-info)
       (cli:command "help" zeps:help zeps:help-info)
       (cli:command "test" zeps:test zeps:test-info)
+      (cli:command "t" zeps:test zeps:test-info)
       (cli:command "repl" zeps:repl zeps:repl-info)
       (cli:command "remove" zeps:remove zeps:remove-info)
+      (cli:command "d" zeps:remove zeps:remove-info)
       (cli:command "register" zeps:register zeps:register-info)
+      (cli:command "r" zeps:register zeps:register-info)
       (cli:command "sandbox" zeps:sandbox zeps:sandbox-info)
       (cli:command "search" zeps:search zeps:search-info)
       (cli:command "keygen" zeps:keygen zeps:keygen-info)
       (cli:command "new" zeps:new zeps:new-info)
+      (cli:command "n" zeps:new zeps:new-info)
       (cli:command "run" zeps:run zeps:run-info)
+      (cli:command "up"  zeps:upgrade zeps:upgrade-info)
       (cli:command "upgrade"  zeps:upgrade zeps:upgrade-info))))
 
 (define parsed-module (parse (++ ((zeps:get-conf) :install-home) "zeps/module.zp")))
