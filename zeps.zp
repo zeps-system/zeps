@@ -16,7 +16,7 @@
       (cli:command "t" zeps:test zeps:test-info)
       (cli:command "repl" zeps:repl zeps:repl-info)
       (cli:command "remove" zeps:remove zeps:remove-info)
-      (cli:command "d" zeps:remove zeps:remove-info)
+      (cli:command "rm" zeps:remove zeps:remove-info)
       (cli:command "register" zeps:register zeps:register-info)
       (cli:command "r" zeps:register zeps:register-info)
       (cli:command "sandbox" zeps:sandbox zeps:sandbox-info)
