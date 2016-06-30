@@ -1,0 +1,15 @@
+#{:name "package" 
+  :version "0.1.0" 
+  :license "GPLv2" 
+  :type :library
+  :tests []
+  :before-install "called-before-the-installation.zp"
+  :after-install "called-after-the-installation.zp"
+  :author #{:name "Alyssa P. Hacker"
+            :email "alyssa@hacks.com" 
+            :github "@aph"}
+  :location #{:github "aph/package" 
+              :zpr "package"}
+  :zepto #{:version :any}
+  :dependencies ("hellerve/html")
+  :dev-dependencies ()}

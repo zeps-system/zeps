@@ -1,0 +1,16 @@
+#{:name "tool" 
+  :version "1.0.0" 
+  :license "MIT" 
+  :type :tool
+  :entry-point "the-script-that-starts-it-all.zp"
+  :tests []
+  :before-install "called-before-the-installation.zp"
+  :after-install "called-after-the-installation.zp"
+  :author #{:name "Alyssa P. Hacker"
+            :email "alyssa@hacks.com" 
+            :github "@aph"}
+  :location #{:github "aph/tool" 
+              :zpr "package"}
+  :zepto #{:version :any}
+  :dependencies ()
+  :dev-dependencies ()}
