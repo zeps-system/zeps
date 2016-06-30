@@ -1,0 +1,31 @@
+(module-extend "zeps"
+  (export
+    `("run" ,run)
+    `("run-info" ,run-info))
+
+  (run-info #{:help "Runs a package."
+              :arguments (("name"
+                           "Runs a package. If it is not installed, it can be downloaded."))})
+
+  (run-module (lambda (name)
+    (let ((info (zeps:get-package-info name)))
+      (if (not (in? info :entry-point))
+        (zeps:error "The module " name " needs an entry-point.")
+        (load (++ ((zeps:get-conf) :install-home) name "/" (info :entry-point)))))))
+
+  (run (lambda (name args)
+    (let ((basename (cadr (string:split name "/"))))
+      (if (zeps:installed? name)
+        (begin
+          (run-module basename)
+          (zeps:success "Terminated " name "."))
+        (let ((prompt (zeps:prompt
+                        (++ "The module " name " is not installed. Should I try to download it?"))))
+          (if prompt
+            (begin
+              (zeps:no-exit #t)
+              (zeps:install name #{})
+              (catch-vm-error (list run-module basename))
+              (zeps:no-exit #f)
+              (zeps:remove basename #{}))
+            (zeps:die "Running module " name " aborted."))))))))
