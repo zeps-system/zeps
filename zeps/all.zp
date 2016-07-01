@@ -120,10 +120,13 @@ fi")
   (get-conf (lambda () conf))
 
   (conf
-    (let ((initial (make-hash :install-home (++ (get-home-dir) "/.zeps/")
-                              :github-url "https://github.com/"
-                              :zpr-url "https://zpr.zepto.com/")))
-      (hash:merge initial (load (++ (get-home-dir) "/.zepsrc")))))
+    (let* ((load-file (lambda (f) (if (file-exists? f) (load f) #{})))
+           (initial (make-hash :install-home (++ (get-home-dir) "/.zeps/")
+                               :github-url "https://github.com/"
+                               :zpr-url "https://zpr.zepto.com/"))
+           (global (hash:merge initial
+                               (load-file (++ (get-home-dir) "/.zepsrc")))))
+      (hash:merge global (load-file ".zepsrc"))))
 
   (set-conf (lambda (nconf) (set! conf nconf)))
   

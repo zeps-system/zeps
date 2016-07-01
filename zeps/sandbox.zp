@@ -1,0 +1,39 @@
+(module-extend "zeps"
+  (export
+    `("sandbox" ,sandbox)
+    `("sandbox-info" ,sandbox-info))
+
+  (loads "zpbash")
+
+  (sandbox-info #{:help "Creates/destroys a sandboxed environment."
+                  :arguments (("create/destroy"
+                               "The subcommand. Can be one of either create or destroy."))})
+
+  (move-file (lambda (file)
+    (bash:command "cp"
+                  (list (++ ((zeps:get-conf) :install-home) "/zeps/templates/" file)
+                        (++ (get-current-dir) "/" file)))))
+
+  (prepare-zeps (lambda ()
+    (begin
+      (bash:command "cp"
+                    (list "-r"
+                          (++ ((zeps:get-conf) :install-home) "/zeps/")
+                          (++ (get-current-dir) "/.zeps/zeps")))
+      (bash:command "rm" (list "-rf" (++ (get-current-dir) "/.zeps/zeps/.git"))))))
+
+  (sandbox (lambda (subcommand args)
+    (case subcommand
+      (("create")
+        (begin
+          (map move-file [".zepsrc" ".zeptorc"])
+          (bash:command "mkdir" (list "-p" (++ (get-current-dir) "/.zeps/")))
+          (prepare-zeps)
+          (zeps:success "Created the sandbox.")))
+      (("destroy")
+        (begin
+          (bash:command "rm" (list "-r" ".zepsrc" ".zeptorc" ".zeps"))
+          (zeps:success "Destroyed the sandbox.")))
+      (else
+        (zeps:die "I did not understand the command " subcommand ". "
+                  "Available actions are create and destroy."))))))

@@ -84,7 +84,7 @@ exhaustive example, see `examples/package/module.zp`.
 	test: Runs the module tests.
 	t: shortcut for test.
 	search: Search for packages matching a search term (on the ZPR).
-	sandbox: Get a sandboxed zeps environment (EXPERIMENTAL)
+	sandbox: Create/destroy a sandboxed zeps environment
 	run: Run the module entry-point, without installing it
 	repl: Launches an interactive shell with a certain module preloaded.
 	remove: Removes a package.
