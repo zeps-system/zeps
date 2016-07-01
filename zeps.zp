@@ -31,7 +31,8 @@
 (define parsed-module (parse (++ ((zeps:get-conf) :install-home) "zeps/module.zp")))
 (define self-info (get-from parsed-module [0 :version]))
 
-(define args  (make-hash :name    "zeps"
-                         :version self-info))
+(define args  (make-hash :name        "zeps"
+                         :description "The zepto package manager"
+                         :version     self-info))
 
 (cli:play env args)

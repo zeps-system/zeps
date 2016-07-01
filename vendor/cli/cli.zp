@@ -156,9 +156,10 @@
     (let* ((args    (if (truthy? args) (car args) #{}))
            (name    (get-from args :name zepto:name))
            (version (get-from args :version "<no version info>"))
+           (help    (get-from args :description ""))
            (args    (get-from args :args zepto:args)))
     (define (internal env args traversed)
-      (let ((wrap-in-cmd (lambda (x) (make-hash :commands x))))
+      (let ((wrap-in-cmd (lambda (x) (make-hash :commands x :info (make-hash :help help)))))
         (cond
           ((or (eq? (get-from args 0 "") "--help") (eq? (get-from args 0 "") "-h"))
             (write-help (wrap-in-cmd env)
