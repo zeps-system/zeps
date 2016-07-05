@@ -1,0 +1,36 @@
+(module-extend "zeps"
+  (export
+    `("compile" ,compile)
+    `("compile-info" ,compile-info))
+
+  (compile-info #{:help "Compiles a package. (NON-WORKING)"
+                  :options #{"output" #{:help "the output file (defaults to a.out)"
+                                        :short "o"}}
+                  :arguments (("backend" "The compiler backend to use (currently only erlang is supported)."))})
+
+  (compile (lambda (backend args)
+    (begin
+      (load "compiler/ast")
+      (load "compiler/nanopass")
+      (load "erl/core")
+
+      (define *backends* (make-hash "erlang" (import "core:ast->core")))
+      (define *descr-string* "this is an experimental pluggable compiler for zepto")
+      (define *options* [#{"name" "backend"
+                           "default" "erl"
+                           "usage" "the backend that should be used"}])
+
+      (define (compile backend program)
+        ((*backends* backend) ((import "nanopass:optimize")
+                                (map (lambda (x) ((import "ast:ast") x)) (parse program)))
+                              (head (string:split (list:last (string:split program "/")) ".zp"))))
+
+      (let ((mod-info (zeps:read-module ".")))
+        (cond
+          ((not (in? mod-info :entry-point)) (zeps:die "Module has no :entry-point."))
+          ((not (in? *backends* backend)) (zeps:die "Unknown backend " backend "."))
+          (else
+            (begin
+              (let ((compilate (compile backend (mod-info :entry-point))))
+                (with-output-file (get-from args "output" "a.out")
+                                  (lambda (f) (write compilate f))))))))))))
