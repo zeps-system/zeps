@@ -1,0 +1,11 @@
+(module-extend "zeps"
+  (export
+    `("readme" ,readme)
+    `("readme-info" ,readme-info))
+
+  (readme-info #{:help "Prints the zepto README."})
+
+  (readme (lambda (args)
+    (begin
+      (write (read-contents (++ ((zeps:get-conf) :install-home) "/zeps/README.md")))
+      (exit 0)))))

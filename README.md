@@ -97,6 +97,7 @@ exhaustive example, see `examples/package/module.zp`.
 	install: Installs a package.
 	i: Shortcut for install.
 	help: Interactive help on getting started (EXPERIMENTAL/BUGGY)
+	readme: Prints zeps' README
 ```
 
 <hr/>

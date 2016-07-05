@@ -122,7 +122,8 @@
               (install-internal lmod x)))
           (else
             (begin
-              (zeps:status "Searching the package database..."))))))))
+              (zeps:status "Searching the package database...")
+              (zeps:die "Not implemented yet."))))))))
 
   (try-local (lambda (args)
     (let ((path (get-from args "path" ".")))
