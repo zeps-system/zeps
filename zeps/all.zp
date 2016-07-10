@@ -15,7 +15,7 @@
     (list "create-entry" create-entry)
     (list "get-conf" get-conf))
 
-  (loads "readline")
+  (loads "readline" "zpbash")
 
   (PRELUDE "if [[ -z \"$@\" ]]; then
     D=\"[]\"

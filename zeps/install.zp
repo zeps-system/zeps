@@ -3,6 +3,8 @@
     (list "install-info" install-info)
     (list "install" install))
 
+  (loads "request/request" "json/json")
+
   (install-info #{:help "Installs a package."
                   :options #{"path" #{:short "p"
                                       :usage "optional package location"}
@@ -31,9 +33,7 @@
       (else (zeps:die "Unparsable name-version tuple " tuple ".")))))
 
   (move (lambda (name path)
-    (begin
-      (load "zpbash")
-      (bash:command "cp" (list "-r" path (++ ((zeps:get-conf) :install-home) name))))))
+    (system "cp" (list "-r" path (++ ((zeps:get-conf) :install-home) name)))))
 
   (install-internal (lambda (lmod args)
     (begin
@@ -97,6 +97,21 @@
         (system "rm" `("-rf" ,rnd-tmp))
         (nil)))))
 
+  (zpr-install (lambda (name version)
+    (let* ((res ((import "request:get") (++ ((zeps:get-conf) :zpr-url)
+                                        "/install/" name "/" (->string version))))
+           (contents (res :body))
+           (fname (make-random-name)))
+      (if (eq? (res :status) 200)
+        (begin
+          (with-output-file fname
+                            ($ (write contents %)))
+          (zeps:status "Extracting package.")
+          (system "tar" `("xvf" ,fname "-C" ,(++ ((zeps:get-conf) :install-home) "/" name)))
+          (system "rm" `("-rf" ,fname))
+          (zeps:success "Successfully installed package " name "."))
+        (zeps:die "Installing the package " name " failed with HTTP " (res :status))))))
+
   (configure (lambda (version? name args)
     (let* ((tuple   (if version? (parse-name-version name) (list name :latest eq)))
            (pname   (car tuple))
@@ -122,8 +137,21 @@
               (install-internal lmod x)))
           (else
             (begin
+              (import-all "request")
               (zeps:status "Searching the package database...")
-              (zeps:die "Not implemented yet."))))))))
+              (let ((res (request:get (++ ((zeps:get-conf) :zpr-url) "/packages/" pname))))
+                (case (res :status)
+                  ((200)
+                    (let ((packages (json:parse (res :body))))
+                      (if (falsy? packages)
+                        (zeps:status "No package matching the term " name " found: " (res :body))
+                        (begin
+                          (zeps:status "Found matching package on the database.")
+                          (zpr-install name version)))))
+                  ((404)
+                    (zeps:status "No package with the name " name " found."))
+                  (else =>
+                    (lambda (status) (zeps:die "The API returned HTTP " status))))))))))))
 
   (try-local (lambda (args)
     (let ((path (get-from args "path" ".")))
