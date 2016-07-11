@@ -15,7 +15,7 @@
     (list "create-entry" create-entry)
     (list "get-conf" get-conf))
 
-  (loads "readline" "zpbash")
+  (loads "readline" "zpbash" "datetime/datetime")
 
   (PRELUDE "if [[ -z \"$@\" ]]; then
     D=\"[]\"
@@ -88,20 +88,23 @@ fi")
           (get-from dflt 0 (nil)))))))
 
   (die (lambda args
-    (define (err args)
-      (define (esc n) (++ (++ "" (integer->char 27)) "[" (number->string n) "m"))
-      (begin
-        (display (esc 31))
-        (display "Fatal: ")
-        (display (esc 0) :flush)
-        (for-each (lambda (x) (display x :stderr)) args)
-        (write "")))
     (begin
-      (err args)
+      (apply colorized-message (++ [] :red "Fatal: " args))
       (exit 1))))
 
   (colorized-message (lambda (col msg . args)
     (begin
+      (if (conf :with-timestamp)
+        (begin
+          (display "[")
+          (color :green)
+          (display (|> unix-timestamp
+                       car
+                       (import "datetime:from-unix-timestamp")
+                       (import "datetime:to-string")
+                       (curry drop 16)))
+          (color :reset)
+          (display "] " :flush)))
       (color :bold)
       (color col)
       (display msg)
@@ -123,6 +126,7 @@ fi")
     (let* ((load-file (lambda (f) (if (file-exists? f) (load f) #{})))
            (initial (make-hash :install-home (++ (get-home-dir) "/.zeps/")
                                :github-url "https://github.com/"
+                               :with-time-stamp #f
                                :zpr-url "https://zpr.zepto.com/"))
            (global (hash:merge initial
                                (load-file (++ (get-home-dir) "/.zepsrc")))))
