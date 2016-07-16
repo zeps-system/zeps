@@ -1,5 +1,5 @@
 #{:name "zeps" 
-  :version "0.0.7" 
+  :version "0.0.8" 
   :license "GPLv2" 
   :entry-point "zeps.zp" 
   :type :tool
