@@ -25,9 +25,7 @@
       (cli:command "new" zeps:new zeps:new-info)
       (cli:command "n" zeps:new zeps:new-info)
       (cli:command "run" zeps:run zeps:run-info)
-      (cli:command "readme" zeps:readme zeps:readme-info)
-      (cli:command "up" zeps:upgrade zeps:upgrade-info)
-      (cli:command "upgrade" zeps:upgrade zeps:upgrade-info))))
+      (cli:command "readme" zeps:readme zeps:readme-info))))
 
 (define parsed-module (parse (++ ((zeps:get-conf) :install-home) "zeps/module.zp")))
 (define self-info (get-from parsed-module [0 :version]))

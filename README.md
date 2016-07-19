@@ -79,8 +79,6 @@ exhaustive example, see `examples/package/module.zp`.
 ## Overview over all of the commands
 
 ```
-	upgrade: Upgrades a package.
-	up: shortcut for upgrade.
 	test: Runs the module tests.
 	t: shortcut for test.
 	search: Search for packages matching a search term (on the ZPR).
