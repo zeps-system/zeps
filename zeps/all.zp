@@ -13,6 +13,7 @@
     (list "get-package-info" get-package-info)
     (list "read-module" read-module)
     (list "create-entry" create-entry)
+    (list "zepto-version-fits" zepto-version-fits)
     (list "get-conf" get-conf))
 
   (loads "readline" "zpbash" "datetime/datetime")
@@ -133,10 +134,13 @@ fi")
       (hash:merge global (load-file ".zepsrc"))))
 
   (set-conf (lambda (nconf) (set! conf nconf)))
-  
+
   (update-conf (lambda (n v)
     (set! conf (hash:set conf n v))))
-  
+
+  (zepto-version-fits (lambda (version)
+    (or (eq? :any version) (semver:matches (string:join (zepto:version) ".") version))))
+
   (get-package-info (lambda (name)
     (read-module (++ (conf :install-home) name)))))
 

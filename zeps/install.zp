@@ -37,6 +37,9 @@
 
   (install-internal (lambda (lmod args)
     (begin
+      (if (not (zeps:zepto-version-fits (get-from lmod [:zepto :version] :any)))
+        (zeps:die "The package can only be installed by zepto versions "
+                  (get-from lmod [:zepto :version]) "."))
       (if (truthy? (lmod :dependencies))
         (begin
           (zeps:status "Installing dependencies for package " (lmod :name) ".")

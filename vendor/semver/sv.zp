@@ -24,7 +24,7 @@
     (let* ((x (if (string? x) (parse x) x))
            (y (if (string? y) (parse y) y))
            (constraint (let ((comp (semver:get-comp y)))
-                        (if (null? comp) eq (or (comparator-map comp) eq)))))
+                        (if (nil? comp) eq (get-from comparator-map comp eq)))))
       (constraint x y))))
 
   (gt (lambda (x y)
