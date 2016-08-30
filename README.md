@@ -100,7 +100,7 @@ And that's it!
 You can actually use HTML for documentation markup (I do not sanity check it, so please don't
 abuse it). There are a few special tags, listed below:
 
-- zepto: this tag will highlight the zepto code contained within it
+- zepto: this tag will highlight the zepto code contained within it (courtesy of [prism](http://prismjs.com/)).
 - par: this will link to the function parameter (it should contain the name of the paramete).
 - fun: this will link to another function in the documentation (it should contain the name of the function).
 
