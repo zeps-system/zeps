@@ -20,6 +20,7 @@
       (cli:command "register" zeps:register zeps:register-info)
       (cli:command "r" zeps:register zeps:register-info)
       (cli:command "sandbox" zeps:sandbox zeps:sandbox-info)
+      (cli:command "docgen" zeps:docgen zeps:docgen-info)
       (cli:command "search" zeps:search zeps:search-info)
       (cli:command "keygen" zeps:keygen zeps:keygen-info)
       (cli:command "new" zeps:new zeps:new-info)

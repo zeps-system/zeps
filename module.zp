@@ -1,15 +1,15 @@
-#{:name "zeps" 
-  :version "0.0.8" 
-  :license "GPLv2" 
-  :entry-point "zeps.zp" 
+#{:name "zeps"
+  :version "0.0.9"
+  :license "GPLv2"
+  :entry-point "zeps.zp"
   :type :tool
   :tests []
   :before-install "zeps/configure.zp"
   :after-install "zeps/reminder.zp"
-  :author #{:name "Veit Heller" 
-            :email "veit@veitheller.de" 
+  :author #{:name "Veit Heller"
+            :email "veit@veitheller.de"
             :github "@hellerve"}
-  :location #{:github "hellerve/zeps" 
+  :location #{:github "hellerve/zeps"
               :zpr "zeps"}
   :zepto #{:version :any
            :ez #f

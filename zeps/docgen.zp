@@ -1,0 +1,122 @@
+(module-extend "zeps"
+  (export
+    `("docgen" ,docgen)
+    `("docgen-info" ,docgen-info))
+
+  (loads "mustache/mustache")
+
+  (docgen-info #{:help "Generates documentation for a package."
+                 :options #{"output-file" #{:short "o"
+                                            :usage "optional output file name (defaults to docs.html"}}
+                 :arguments (("name"
+                              "the package name"))})
+
+  (function:info (lambda (name function)
+    "gets the information on a function as a hashmap.
+
+    params:
+      - name:     the function name
+      - function: the function to document
+    complexity: O(1)
+    returns: a hashmap with the keys <i>name</i>, <i>docs</i>, <i>params</i>, <i>complexity</i>, <i>primitive?</i>, and <i>returns</i>"
+    (define (treat-param input info)
+      (let ((split (string:split input #\:)))
+        (hash:update info
+                     "params"
+                     ($ (++ %  (make-hash "pname" (string:trim (car split))
+                                          "doc" (string:trim
+                                                  (string:join (cdr split)
+                                                               #\:))))))))
+
+    (define (sanitize-params params)
+      (let ((saturated (map ($ (% "pname")) params)))
+        (++ params
+            (|> (if (primitive? function) [] (function:args function))
+                (curry filter ($ (not (in? saturated %))))
+                (curry map ($ (make-hash "pname" %
+                                         "doc" "No documentation")))))))
+
+    (define (treat-params input info)
+      (let loop ((input input)
+                 (info info))
+        (let ((first (string:trim (car input))))
+          (if (string:starts-with first "-")
+            (loop (cdr input) (treat-param (cdr first) info))
+            (make-hash :info info :rest input)))))
+
+    (define (treat-regular input info)
+      (let* ((split (string:split (car input) #\:))
+             (key   (string:trim (car split)))
+             (val   (string:trim (string:join (cdr split) #\:))))
+        (make-hash :info (hash:set info key val)
+                   :rest (cdr input))))
+
+
+    (let* ((doc   (function:docstring function))
+           (input (string:split doc "\n\n"))
+           (info (make-hash "params" []
+                            "complexity" "N.A."
+                            "returns" "N.A."
+                            "primitive?" (primitive? function)
+                            "name" name)))
+      (if (eq? (length input) 1)
+        (hash:set (hash:set info "docs" (car input)) "params" (sanitize-params []))
+        (let loop ((input (string:split (list:last input) #\newline))
+                   (info (hash:set info "docs" (string:join (list:but-last input) "\n\n"))))
+          (if (null? input)
+            (hash:update info "params" sanitize-params)
+            (let ((parse (string:trim (car input))))
+              (if (string:starts-with parse "params:")
+                (let ((parsed (treat-params (cdr input) info)))
+                  (loop (parsed :rest) (parsed :info)))
+                (let ((parsed (treat-regular input info)))
+                  (loop (parsed :rest) (parsed :info)))))))))))
+
+  (function:render (lambda (functions name description)
+    "Renders a list of functions.
+
+    params:
+      - functions: a list of functions to render
+      - name: the name of the rendered output
+      - description: the description of the rendered output
+    complexity: O(n)
+    returns: the template value"
+    (let ((template (read-contents (++ ((zeps:get-conf) :install-home)
+                                       "zeps/templates/docs.zms"))))
+      ((import "mustache:template") template
+          (make-hash "name" name
+                     "description" description
+                     "elements" (make-hash "namespace" name "contents" functions))))))
+
+  (function:render-all-in (lambda (name env)
+    "Renders all the function defined in the given environment
+
+     params:
+       - name: the function name
+       - env: the environment to render
+     complexity: O(n) (where n is the number of definitions)
+     returns: the templated string"
+    (let ((global (make-hash (zepto:get-bindings name env)))
+          (filter-fun ($ (and (function? %)
+                              (not (eq? "do not expose" (function:docstring %)))))))
+      (function:render (hash:kv-map (curry apply function:info)
+                                    (hash:filter-by-vals filter-fun global))
+                       name
+                       (++ "The documentation of the " name " package.")))))
+
+    (docgen (lambda (name args)
+      "Renders documentation for a package name."
+      (begin
+        (zeps:status "Loading module " name "...")
+        (load (++ name "/" (get-from (zeps:get-package-info name)
+                                     :entry-point
+                                     name)))
+        (if (in? *modules* name) (import-all name))
+        (let ((fname (get-from args "output-file" "docs.html")))
+          (begin
+            (zeps:status "Generating documentation for module " name ".")
+            (with-output-file fname
+                              (curry write
+                                     (function:render-all-in name (current-env))))
+            (system "open" (list fname))
+            (zeps:success "Documentation generated!")))))))

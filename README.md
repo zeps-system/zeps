@@ -70,6 +70,40 @@ zeps register . # this will try to register the package on the zpr
 zeps register . -g # this will try to register the package on the zpr and create a tag on github so we can find the package revision
 ```
 
+### Documenting packages
+
+`zeps` can also be used to generate package documentation. If the docstrings
+in the documentation file adhere to the format specified below, running the command
+
+```
+zeps docgen yourpackage
+```
+
+will generate a HTML file that documents all public functions of your package.
+
+The format is as follows:
+
+```
+the summary of the documentation. it can be any number of lines and paragraphs.
+
+params:
+ - parameter1: each parameter is preceded by a "-" and after a ":", you can describe it
+ - parameter2: it need not be the first element below the documentation
+complexity: computational complexity, usually denoted in big-O-notation, but can be anything
+returns: a description of the return value
+```
+
+And that's it!
+
+#### Advanced features
+
+You can actually use HTML for documentation markup (I do not sanity check it, so please don't
+abuse it). There are a few special tags, listed below:
+
+- zepto: this tag will highlight the zepto code contained within it
+- par: this will link to the function parameter (it should contain the name of the paramete).
+- fun: this will link to another function in the documentation (it should contain the name of the function).
+
 ## The module.zp file
 
 The `module.zp` file contains all necessary meta information
@@ -96,6 +130,7 @@ exhaustive example, see `examples/package/module.zp`.
 	i: Shortcut for install.
 	help: Interactive help on getting started (EXPERIMENTAL/BUGGY)
 	readme: Prints zeps' README
+	docgen: Generate documentation for a package from its docstrings
 ```
 
 <hr/>
