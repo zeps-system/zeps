@@ -320,7 +320,12 @@
         });
         [].slice.call(document.getElementsByTagName("zepto")).forEach(function(el) {
           //sorry
-          var newEl = document.createElement("span");
+          if (el.innerHTML.contains("\n"))
+            var tag = "pre";
+          else
+            var tag = "span";
+          var newEl = document.createElement(tag);
+
 
           newEl.innerHTML = el.innerHTML;
 

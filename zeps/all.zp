@@ -7,6 +7,8 @@
     (list "prompt" prompt)
     (list "input" input)
     (list "installed?" installed?)
+    (list "get-template" id)
+    (list "build-template" id)
     (list "no-exit" no-exit)
     (list "update-conf" update-conf)
     (list "set-conf" set-conf)

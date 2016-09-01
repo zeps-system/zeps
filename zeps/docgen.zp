@@ -62,7 +62,7 @@
       (if (eq? (length input) 1)
         (hash:set (hash:set info "docs" (car input)) "params" (sanitize-params []))
         (let loop ((input (string:split (list:last input) #\newline))
-                   (info (hash:set info "docs" (string:join (list:but-last input) "\n\n"))))
+                   (info (hash:set info "docs" (string:join (list:but-last input) "<br/>"))))
           (if (null? input)
             (hash:update info "params" sanitize-params)
             (let ((parse (string:trim (car input))))
