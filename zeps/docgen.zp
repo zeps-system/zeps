@@ -31,7 +31,9 @@
     (define (sanitize-params params)
       (let ((saturated (map ($ (% "pname")) params)))
         (++ params
-            (|> (if (primitive? function) [] (function:args function))
+            (|> (if (or (macro? function) (primitive? function))
+                  []
+                  (function:args function))
                 (curry filter ($ (not (in? saturated %))))
                 (curry map ($ (make-hash "pname" %
                                          "doc" "No documentation")))))))
@@ -97,10 +99,13 @@
      complexity: O(n) (where n is the number of definitions)
      returns: the templated string"
     (let ((global (make-hash (zepto:get-bindings name env)))
-          (filter-fun ($ (and (function? %)
-                              (not (eq? "do not expose" (function:docstring %)))))))
-      (function:render (hash:kv-map (curry apply function:info)
-                                    (hash:filter-by-vals filter-fun global))
+          (filter-fun ($ (and (or (callable? (cadr %))
+                                  (macro? (cadr %)))
+                              (or (primitive? (cadr %))
+                                  (not (in? ["lambda" "do not expose"]
+                                            (function:docstring (cadr %)))))))))
+      (function:render (map (curry apply function:info)
+                            (hash:kv-filter filter-fun global))
                        name
                        (++ "The documentation of the " name " package.")))))
 

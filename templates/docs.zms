@@ -335,7 +335,18 @@
             var parent = newEl;
           }
 
-          newEl.innerHTML = el.innerHTML;
+          var transform = function(txt) {
+            var split = txt.split("\n");
+
+            if (split[0].match(/^\s*$/)) split = split.slice(1);
+
+            var rmlen = split[0].match(/^\s*/)[0].length;
+
+            return split.map(function(x) { return x.slice(rmlen); })
+                        .reduce(function(acc, x) { return acc + "\n" + x});
+          };
+
+          newEl.innerHTML = transform(el.innerHTML);
 
           newEl.classList.add("language-scheme");
           el.parentNode.replaceChild(parent, el);
