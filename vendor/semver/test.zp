@@ -63,7 +63,7 @@
   (sv:matches (sv:parse "1.1.1") (sv:parse ">1.1.0"))
   "test we can match > semantic versions")
 
-(minitest:assert-true
+(minitest:assert-false
   (sv:matches (sv:parse "1.0.9") (sv:parse ">1.1.0"))
   "test we cannot match > semantic versions if they're not satisfied")
 
@@ -75,6 +75,6 @@
   (sv:matches (sv:parse "1.1.0") (sv:parse ">=1.1.0"))
   "test we can match <= semantic versions on equality")
 
-(minitest:assert-true
+(minitest:assert-false
   (sv:matches (sv:parse "1.0.9") (sv:parse ">=1.1.0"))
   "test we cannot match <= semantic versions if they're not satisfied")
