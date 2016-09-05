@@ -54,6 +54,11 @@
       (move (get-from args "as" (lmod :name)) (get-from args "path" "."))
       (if (eq? (lmod :type) :tool)
         (zeps:create-entry (hash:update lmod :name (lambda (name) (get-from args "as" name)))))
+      (if (eq? (lmod :type) :native)
+        (begin
+          (zeps:status "The package " (lmod :name) " is a native extension.")
+          (zeps:status "Running cabal install for the extension.")
+          (system "cabal" ["install"])))
       (if (in? lmod :after-install)
         (let () (load (lmod :after-install))))
       (zeps:success (++ "installation of package " (lmod :name)
