@@ -10,6 +10,7 @@
   (cli:create
     (list
       (cli:command "install" zeps:install zeps:install-info)
+      (cli:command "installed" zeps:installed zeps:installed-info)
       (cli:command "i" zeps:install zeps:install-info)
       (cli:command "help" zeps:help zeps:help-info)
       (cli:command "test" zeps:test zeps:test-info)
