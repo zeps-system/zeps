@@ -58,7 +58,11 @@
         (begin
           (zeps:status "The package " (lmod :name) " is a native extension.")
           (zeps:status "Running cabal install for the extension.")
-          (system "cabal" ["install"])))
+          (let* ((force-reinstall (if (args "force") "--force-reinstalls" ""))
+                 (ret (system "cabal" `("install" ,force-reinstall))))
+            (if (not (eq? 0 (car ret)))
+              (zeps:die "The command cabal install died with:\n\n" (caddr ret)
+                        "\nAborting cowardly.")))))
       (if (in? lmod :after-install)
         (let () (load (lmod :after-install))))
       (zeps:success (++ "installation of package " (lmod :name)
