@@ -7,6 +7,29 @@
               :arguments (("name"
                            "the package or fully qualified function name"))})
 
+  (bolden (lambda (str)
+    (++ (color :bold #{:to-str #t}) str (color :reset #{:to-str #t}))))
+
+  (fmt-docstring (lambda (fun)
+    (define (replace f str docs)
+      (let ((patch (make-regex
+                      (++ "<" str ">(((?!<\/" str ">).|\n)*)<\/" str ">"))))
+        (let loop ((docs docs))
+          (if (regex:matches? patch docs)
+            (loop (regex:sub patch
+                             (f (get-from (regex:groups patch docs) [0 0]))
+                             docs))
+            docs))))
+
+    (|> (function:docstring fun)
+        (curry replace bolden "par")
+        (curry replace bolden "fun")
+        (curry replace zeps:highlight-code "zepto"))))
+
+  (fmt-head (lambda (name fun)
+    (zeps:highlight-code (++ "(" name " "
+                             (string:join (function:args fun) " ") ")"))))
+
   (load-and-print (lambda (pkg ns name)
     (begin
       (load (++ pkg "/" ns))
@@ -21,7 +44,8 @@
             (color :bold)
             (write (++ "(Defined in package " pkg ")"))
             (color :reset)
-            (write (function:docstring fun)))
+            (write (++ "  " (fmt-head (++ ns ":" name) fun)
+                       "\n\t" (fmt-docstring fun))))
           (zeps:die "Function " name " not found in module " ns
                     " (defined in package " pkg ")."))))))
 
