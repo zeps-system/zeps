@@ -12,4 +12,5 @@
               :zpr "package"}
   :zepto #{:version :any}
   :dependencies ("hellerve/html")
+  :modules ["packagemodule" "packagemodule2"]
   :dev-dependencies ()}

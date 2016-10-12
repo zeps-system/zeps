@@ -11,7 +11,7 @@
                  :arguments (("name"
                               "the package name"))})
 
-  (function:info (lambda (name function)
+  (info (lambda (name function)
     "gets the information on a function as a hashmap.
 
     params:
@@ -74,11 +74,11 @@
                 (let ((parsed (treat-regular input info)))
                   (loop (parsed :rest) (parsed :info)))))))))))
 
-  (function:render (lambda (functions name description)
-    "Renders a list of functions.
+  (render (lambda (namespaces name description)
+    "Renders a list of namespaces.
 
     params:
-      - functions: a list of functions to render
+      - namespaces: a list of namespaces
       - name: the name of the rendered output
       - description: the description of the rendered output
     complexity: O(n)
@@ -88,40 +88,50 @@
       ((import "mustache:template") template
           (make-hash "name" name
                      "description" description
-                     "elements" (make-hash "namespace" name "contents" functions))))))
+                     "elements" namespaces)))))
 
-  (function:render-all-in (lambda (name env)
+  (render-all-in (lambda (mod names env)
     "Renders all the function defined in the given environment
 
      params:
-       - name: the function name
+       - mod: the module name
+       - names: the module names
        - env: the environment to render
      complexity: O(n) (where n is the number of definitions)
      returns: the templated string"
-    (let ((global (make-hash (zepto:get-bindings name env)))
+    (let ((namespaces (make-hash
+                        (map ($ (list % (make-hash (zepto:get-bindings % env))))
+                              names)))
           (filter-fun ($ (and (or (callable? (cadr %))
                                   (macro? (cadr %)))
                               (or (primitive? (cadr %))
                                   (not (in? ["lambda" "do not expose"]
                                             (function:docstring (cadr %)))))))))
-      (function:render (map (curry apply function:info)
-                            (hash:kv-filter filter-fun global))
-                       name
-                       (++ "The documentation of the " name " package.")))))
+      (render (hash:kv-map
+                ($ (make-hash "namespace" (car %)
+                              "contents"
+                                (map (curry apply info)
+                                     (hash:kv-filter filter-fun (cadr %)))))
+                         namespaces)
+               mod
+               (++ "The documentation of the " mod " package.")))))
 
     (docgen (lambda (name args)
       "Renders documentation for a package name."
-      (begin
-        (zeps:status "Loading module " name "...")
-        (load (++ name "/" (get-from (zeps:get-package-info name)
-                                     :entry-point
-                                     name)))
-        (if (in? *modules* name) (import-all name))
-        (let ((fname (get-from args "output-file" "docs.html")))
-          (begin
-            (zeps:status "Generating documentation for module " name ".")
-            (with-output-file fname
-                              (curry write
-                                     (function:render-all-in name (current-env))))
-            (system "open" (list fname))
-            (zeps:success "Documentation generated!")))))))
+      (let ((to-load (get-from (zeps:get-package-info name) :modules (list name)))
+            (fname   (get-from args "output-file" "docs.html"))
+            (env     (current-env)))
+        (begin
+          (map (lambda (mod)
+                (begin
+                  (zeps:status "Loading module " mod "...")
+                  (load (++ name "/" mod) env)
+                  (if (in? *modules* mod) (eval (macro-expand (list 'import-all mod)) env))))
+               to-load)
+          (zeps:status "Generating documentation for modules "
+                       (string:join to-load ", ") ".")
+          (with-output-file
+              fname
+              (curry write (render-all-in name to-load env)))
+          (system "open" (list fname))
+          (zeps:success "Documentation generated!"))))))
