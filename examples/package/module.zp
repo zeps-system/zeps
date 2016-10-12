@@ -1,4 +1,5 @@
 #{:name "package" 
+  :description "An example package"
   :version "0.1.0" 
   :license "GPLv2" 
   :type :library

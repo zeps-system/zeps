@@ -1,5 +1,6 @@
 #{:name "zeps"
   :version "0.0.11"
+  :description "The zepto package manager"
   :license "GPLv2"
   :entry-point "zeps.zp"
   :type :tool
