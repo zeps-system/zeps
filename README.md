@@ -131,6 +131,7 @@ exhaustive example, see `examples/package/module.zp`.
 	help: Interactive help on getting started (EXPERIMENTAL/BUGGY)
 	readme: Prints zeps' README
 	docgen: Generate documentation for a package from its docstrings
+	doc: Format and print documentation for package or function
 ```
 
 <hr/>

@@ -1,0 +1,70 @@
+(module-extend "zeps"
+  (export
+    `("doc" ,doc)
+    `("doc-info" ,doc-info))
+
+  (doc-info #{:help "Format and print documentation for a package or function."
+              :arguments (("name"
+                           "the package or fully qualified function name"))})
+
+  (load-and-print (lambda (pkg ns name)
+    (begin
+      (load (++ pkg "/" ns))
+      (if (in? *modules* ns) (import-all ns))
+      (let ((fun (get-from (env->hashmap (current-env)) (++ ns ":" name))))
+        (if (function? fun)
+          (begin
+            (color :underline)
+            (display (++ ns ":" name ":"))
+            (color :reset)
+            (display "\t")
+            (color :bold)
+            (write (++ "(Defined in package " pkg ")"))
+            (color :reset)
+            (write (function:docstring fun)))
+          (zeps:die "Function " name " not found in module " ns
+                    " (defined in package " pkg ")."))))))
+
+  (not-found (lambda (pkg)
+    (zeps:die "Package or module " pkg " not found.")))
+
+  (find-and-print (lambda (pkg name)
+    (let loop ((installed (zeps:list-installed)))
+      (if (null? installed)
+        (not-found pkg)
+        (let ((mod-conf (zeps:get-package-info (car installed))))
+          (if (in? (get-from mod-conf :modules []) pkg)
+            (load-and-print (car installed) pkg name)
+            (loop (cdr installed))))))))
+
+  (doc-function (lambda (name)
+    (let* ((split (string:split name #\:))
+           (pkg   (car split))
+           (name  (string:join (cdr split) #\:)))
+      (if (zeps:installed? pkg)
+        (load-and-print pkg pkg name)
+        (find-and-print pkg name)))))
+
+  (doc-package (lambda (name)
+    (if (zeps:installed? name)
+      (begin
+        (color :underline)
+        (display (++ name ":"))
+        (color :reset)
+        (display " ")
+        (write (get-from (zeps:get-package-info name) :description
+                         "No package description")))
+      (not-found name))))
+
+  (doc (lambda (name args)
+    "zeps endpoint that formats and prints documentation for a package
+     or fully qualified function name by <par>name</par>.
+
+     params:
+      - name: the name of the object to document
+      - args: should be empty (optional arguments)
+     complexity: O(1)
+     returns: this routine exits the program"
+   (if (in? name #\:)
+     (doc-function name)
+     (doc-package name)))))

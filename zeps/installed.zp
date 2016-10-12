@@ -12,26 +12,18 @@
       - args: the configuration hashmap
     complexity: O(n) where n is the number of installed packages
     returns: this function terminates the program"
-    (let* ((sys (|> ((zeps:get-conf) :install-home)
-                    list
-                    (curry system "ls")
-                    cadr
-                    (curry regex:split r/\s+/)))
-            (filter-fun ($ (not (and (string:ends-with % "-script")
-                                     (in? sys
-                                          (string:substitute % "-script" ""))))))
-            (sys (filter filter-fun sys))
-            (longest (reduce (lambda (acc x)
-                                (if (> (length x) (length acc)) x acc))
-                             ""
-                             sys))
-            (width (|> (system "resize" [])
-                       cadr
-                       (curry regex:groups r/COLUMNS=(.*)/)
-                       caar
-                       string->number))
-            (times (/ width (add1 (length longest))))
-            (pad (/ width times)))
+    (let* ((all (zeps:list-installed))
+           (longest (reduce (lambda (acc x)
+                               (if (> (length x) (length acc)) x acc))
+                            ""
+                            all))
+           (width (|> (system "resize" [])
+                      cadr
+                      (curry regex:groups r/COLUMNS=(.*)/)
+                      caar
+                      string->number))
+           (times (/ width (add1 (length longest))))
+           (pad (/ width times)))
       (begin
         (reduce (lambda (acc x)
                   (let* ((len (length x))
@@ -41,5 +33,5 @@
                       (begin (display (++ "\n" prn)) 0)
                       (begin (display prn) new))))
                 -1
-                sys)
+                all)
         (write ""))))))

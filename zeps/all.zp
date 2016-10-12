@@ -6,6 +6,7 @@
     (list "success" success)
     (list "prompt" prompt)
     (list "input" input)
+    (list "list-installed" list-installed)
     (list "installed?" installed?)
     (list "get-template" id)
     (list "build-template" id)
@@ -68,6 +69,19 @@ fi")
             info
             (die "Package " name " has invalid module.zp file. Either fix or uninstall package.")))
         (die "Could not open file " path ".")))))
+
+  (list-installed (lambda ()
+    (let* ((ls (|> ((zeps:get-conf) :install-home)
+                   list
+                   (curry system "ls")
+                   cadr
+                   (curry regex:split r/\s+/)))
+           (filter-fun ($ (not (or
+                                (regex:matches? r/^\s*$/ %)
+                                (and (string:ends-with % "-script")
+                                     (in? ls
+                                          (string:substitute % "-script" ""))))))))
+      (filter filter-fun ls))))
 
   (installed? (lambda (name . vp)
     (let ((info (_read-module (++ (conf :install-home) name))))
@@ -163,3 +177,4 @@ fi")
 (load "zeps/zeps/compile")
 (load "zeps/zeps/docgen")
 (load "zeps/zeps/installed")
+(load "zeps/zeps/doc")
