@@ -12,7 +12,7 @@
 
   (publish-to-github (lambda (dir info)
     (begin
-      (zepto:change-dir dir)
+      (os:change-dir dir)
       (system "git" (list "tag" (info :version)))
       (system "git" (list "push" "--tags"))
       (nil))))
