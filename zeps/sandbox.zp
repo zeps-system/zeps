@@ -12,22 +12,22 @@
   (move-file (lambda (file)
     (bash:command "cp"
                   (list (++ ((zeps:get-conf) :install-home) "/zeps/templates/" file)
-                        (++ (get-current-dir) "/" file)))))
+                        (++ (os:get-current-dir) "/" file)))))
 
   (prepare-zeps (lambda ()
     (begin
       (bash:command "cp"
                     (list "-r"
                           (++ ((zeps:get-conf) :install-home) "/zeps/")
-                          (++ (get-current-dir) "/.zeps/zeps")))
-      (bash:command "rm" (list "-rf" (++ (get-current-dir) "/.zeps/zeps/.git"))))))
+                          (++ (os:get-current-dir) "/.zeps/zeps")))
+      (bash:command "rm" (list "-rf" (++ (os:get-current-dir) "/.zeps/zeps/.git"))))))
 
   (sandbox (lambda (subcommand args)
     (case subcommand
       (("create")
         (begin
           (map move-file [".zepsrc" ".zeptorc"])
-          (bash:command "mkdir" (list "-p" (++ (get-current-dir) "/.zeps/")))
+          (bash:command "mkdir" (list "-p" (++ (os:get-current-dir) "/.zeps/")))
           (prepare-zeps)
           (zeps:success "Created the sandbox.")))
       (("destroy")

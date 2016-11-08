@@ -1,1 +1,1 @@
-(make-hash :install-home (++ (get-current-dir) "/.zeps/"))
+(make-hash :install-home (++ (os:get-current-dir) "/.zeps/"))

@@ -1,1 +1,1 @@
-(zepto:add-to-path (++ (get-current-dir) "/.zeps/"))
+(zepto:add-to-path (++ (os:get-current-dir) "/.zeps/"))
