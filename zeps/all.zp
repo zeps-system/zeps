@@ -141,12 +141,12 @@ fi")
 
   (conf
     (let* ((load-file (lambda (f) (if (file-exists? f) (load f) #{})))
-           (initial (make-hash :install-home (++ (get-home-dir) "/.zeps/")
+           (initial (make-hash :install-home (++ (os:get-home-dir) "/.zeps/")
                                :github-url "https://github.com/"
                                :with-time-stamp #f
                                :zpr-url "https://zpr.zepto.com/"))
            (global (hash:merge initial
-                               (load-file (++ (get-home-dir) "/.zepsrc")))))
+                               (load-file (++ (os:get-home-dir) "/.zepsrc")))))
       (hash:merge global (load-file ".zepsrc"))))
 
   (set-conf (lambda (nconf) (set! conf nconf)))

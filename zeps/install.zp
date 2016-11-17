@@ -90,7 +90,7 @@
         (zeps:status "Checking for requested version ("
                      (if (eq? :latest version) "latest" (->string version)) 
                      ")...")
-        (zepto:change-dir rnd-tmp)
+        (os:change-dir rnd-tmp)
         (define vsn (if (eq? :latest version)
           (string:trim (cadr (system "git"
                         `("describe" "--tags"
@@ -99,14 +99,14 @@
         (define tag (system "git" (list "checkout" (++ "tags/" (->string vsn)))))
         (if (not (eq? 0 (car tag)))
           (begin
-            (zepto:change-dir "..")
+            (os:change-dir "..")
             (system "rm" `("-rf" ,rnd-tmp))
             (zeps:die "Version " (->string vsn) " does not exist in git tags."))
           (zeps:status "Checked out version " (->string vsn) " of package " name "."))
         (zeps:status "Installing...")
         (zeps:no-exit #t)
         (install "." #{} (zeps:get-conf))
-        (zepto:change-dir "..")
+        (os:change-dir "..")
         (system "rm" `("-rf" ,rnd-tmp))
         (nil)))))
 
