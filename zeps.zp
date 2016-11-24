@@ -30,8 +30,12 @@
       (cli:command "run" zeps:run zeps:run-info)
       (cli:command "readme" zeps:readme zeps:readme-info))))
 
-(define parsed-module (parse (++ ((zeps:get-conf) :install-home) "zeps/module.zp")))
-(define self-info (get-from parsed-module [0 :version]))
+(if (file-exists? (++ ((zeps:get-conf) :install-home) "zeps/module.zp"))
+  (begin
+    (define parsed-module (parse (++ ((zeps:get-conf) :install-home)
+                                     "zeps/module.zp")))
+    (define self-info (get-from parsed-module [0 :version])))
+  (define self-info "unknown"))
 
 (define args  (make-hash :name        "zeps"
                          :description "The zepto package manager"
