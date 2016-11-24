@@ -3,7 +3,7 @@
     `("docgen" ,docgen)
     `("docgen-info" ,docgen-info))
 
-  (loads "mustache/mustache")
+  (loads "zeps/vendor/mustache/mustache")
 
   (docgen-info #{:help "Generates documentation for a package."
                  :options #{"output-file" #{:short "o"
