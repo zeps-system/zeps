@@ -155,7 +155,9 @@ fi")
     (set! conf (hash:set conf n v))))
 
   (zepto-version-fits (lambda (version)
-    (or (eq? :any version) (semver:matches (string:join (zepto:version) ".") version))))
+    (or (eq? :any version)
+        (semver:matches (string:join (map ->string (zepto:version)) ".")
+                        version))))
 
   (get-package-info (lambda (name)
     (read-module (++ (conf :install-home) name)))))
