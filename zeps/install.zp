@@ -3,7 +3,7 @@
     (list "install-info" install-info)
     (list "install" install))
 
-  (loads "request/request" "json/json")
+  (loads "zeps/vendor/request/request" "json/json")
 
   (install-info #{:help "Installs a package."
                   :options #{"path" #{:short "p"

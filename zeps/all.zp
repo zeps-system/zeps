@@ -162,7 +162,6 @@ fi")
 
 (load "zeps/zeps/install")
 (load "zeps/zeps/register")
-(load "zeps/zeps/upgrade")
 (load "zeps/zeps/remove")
 (load "zeps/zeps/repl")
 (load "zeps/zeps/keygen")

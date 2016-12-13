@@ -13,6 +13,8 @@ git clone https://github.com/hellerve/zeps
 zepto zeps/zeps install . --path zeps
 ```
 
+If the command zeps is still not found, try prepending `sudo` to the above.
+
 ## Usage
 
 ### Installing Packages
