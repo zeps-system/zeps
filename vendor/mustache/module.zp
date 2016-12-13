@@ -1,0 +1,15 @@
+#{:name "mustache"
+  :version "1.0.2"
+  :license "GPLv2"
+  :tests []
+  :type :library
+  :author #{:name "Veit Heller"
+            :email "veit@veitheller.de"
+            :github "@hellerve"}
+  :location #{:github "zepto-lang/mustache"
+              :zpr "mustache"}
+  :zepto #{:version :any
+           :ez #f
+           :bz #f}
+  :dependencies ()
+  :dev-dependencies ()}

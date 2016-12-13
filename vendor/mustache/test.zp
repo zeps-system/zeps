@@ -1,0 +1,95 @@
+(load "mustache")
+(load "minitest/minitest")
+(define template (import "mustache:template"))
+(define minitest:assert-equal (import "minitest:assert-equal"))
+((import "minitest:colorize") #t)
+((import "minitest:verbose") #t)
+
+(minitest:assert-equal
+  ""
+  (template "{{!a}}" #{"a" 1})
+  "test that comments are removed")
+
+(minitest:assert-equal
+  "&lt;h1&gt;&amp;"
+  (template "{{a}}" #{"a" "<h1>&"})
+  "test that escaped output is corretly rendered")
+
+(minitest:assert-equal
+  "{{a}}"
+  (template "{{a}}" #{})
+  "test that escaped output is corretly ignored if undefined")
+
+(minitest:assert-equal
+  "<h1>&"
+  (template "{{{a}}}" #{"a" "<h1>&"})
+  "test that unescaped output is corretly rendered")
+
+(minitest:assert-equal
+  "{{{a}}}"
+  (template "{{{a}}}" #{})
+  "test that unescaped output is correctly ignored if undefined")
+
+(minitest:assert-equal
+  "Hello!"
+  (template "{{#a}}Hello!{{/a}}" #{"a" "<h1>&"})
+  "test that simple section output is corretly rendered")
+
+(minitest:assert-equal
+  ""
+  (template "{{#a}}Hello!{{/a}}" #{})
+  "test that simple section output is corretly omitted if undefined")
+
+(minitest:assert-equal
+  "Hello!"
+  (template "{{#a}}{{b}}{{/a}}" #{"a" #{"b" "Hello!"}})
+  "test that nested section output is corretly rendered")
+
+(minitest:assert-equal
+  ""
+  (template "{{#a}}{{b}}{{/a}}" #{"a" #{}})
+  "test that nested section output is corretly omitted if undefined")
+
+(minitest:assert-equal
+  "123"
+  (template "{{#a}}{{.}}{{/a}}" #{"a" ("1" "2" "3")})
+  "test that nested section output with implicit iterator is corretly rendered")
+
+(minitest:assert-equal
+  ""
+  (template "{{#a}}{{.}}{{/a}}" #{"a" ()})
+  "test that nested section output with implicit iterator is corretly rendered with empty list")
+
+(minitest:assert-equal
+  ""
+  (template "{{#a}}{{.}}{{/a}}" #{})
+  "test that nested section output with implicit iterator is corretly omitted if undefined")
+
+(minitest:assert-equal
+  "1"
+  (template "{{a.b.c}}" #{"a" #{"b" #{"c" "1"}}})
+  "test that dotted name output is corretly rendered")
+
+(minitest:assert-equal
+  "{{a.b.c}}"
+  (template "{{a.b.c}}" #{"a" #{"b" #{}}})
+  "test that dotted name output is corretly ignored if not defined")
+
+(minitest:assert-equal
+  ""
+  (template "{{^a.b.c}}Hi!{{/a.b.c}}" #{"a" #{"b" #{"c" "1"}}})
+  "test that inverted section output is corretly omitted if defined")
+
+(minitest:assert-equal
+  "Hi!"
+  (template "{{^a.b.c}}Hi!{{/a.b.c}}" #{"a" #{"b" 1}})
+  "test that inverted name output is corretly rendered if undefined")
+
+(minitest:assert-equal
+  "<h1>I am a title</h1><span>I am some text</span><ul><li>We</li><li>Are</li><li>Elements</li></ul>"
+  (template
+    "<h1>{{#render-title}}I am a title{{/render-title}}{{^omit-closing}}</h1>{{/omit-closing}}{{{text}}}<ul>{{#elements}}<li>{{.}}</li>{{/elements}}</ul>"
+    #{"render-title" #t "omit-closing" #f "text" "<span>I am some text</span>" "elements" ("We" "Are" "Elements")})
+  "A silly, but somewhat complete example")
+
+((import "minitest:results"))

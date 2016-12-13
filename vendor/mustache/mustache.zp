@@ -1,0 +1,138 @@
+(module "mustache"
+  (export
+    (list "template" template))
+
+  (curry-flip (lambda (f x)
+    (lambda (y) (f y x))))
+
+  (escape (lambda (str)
+    (string:substitute
+      (string:substitute
+        (string:substitute
+          str
+          "&"
+          "&amp;")
+        ">"
+        "&gt;")
+      "<"
+      "&lt;")))
+
+  (each-occurrence (lambda (f sub str)
+    (let ((first (string:find str sub)))
+      (if (or (< first 0) (string:empty? str))
+        str
+        (let ((new (f (substring str first (length str)))))
+          (if (eq? new str)
+            (++ (substring str 0 (add1 first))
+                (each-occurrence f sub (substring str (add1 first) (length str))))
+            (++ (substring str 0 first) (each-occurrence f sub new))))))))
+
+  (expand (lambda (str values)
+    (cond
+      ((hash-map? values) (template str values))
+      ((list? values)
+        (if (all? hash-map? values)
+          (string:join (map (curry template str) values))
+          (string:join (map (lambda (x) (template str (make-hash "." x))) values))))
+      (else str))))
+
+  (_get (lambda (values key)
+    (let ((undotted (string:split key #\.)))
+      (get-from values undotted))))
+
+  (replace-normal (lambda (str values)
+    (each-occurrence (lambda (str)
+      (if (in? str "}}")
+        (let* ((k (substring str 2 (string:find str "}}")))
+               (v (_get values k)))
+          (if (nil? v)
+            str
+            (string:substitute
+              str
+              (++ "{{" k "}}")
+              (escape v))))
+          str))
+        "{{" str)))
+
+  (replace-unescaped (lambda (str values)
+    (each-occurrence (lambda (str)
+      (if (in? str "}}}")
+        (let* ((k (substring str 3 (string:find str "}}}")))
+               (v (_get values k)))
+          (if (nil? v)
+            str
+            (string:substitute
+              str
+              (++ "{{{" k "}}}")
+              v)))
+          str))
+        "{{{" str)))
+
+  (replace-section (lambda (str values)
+    (each-occurrence (lambda (str)
+      (if (in? str "}}")
+        (let* ((k (substring str 3 (string:find str "}}")))
+               (v (_get values k))
+               (end-marker (++ "{{/" k "}}"))
+               (section-end (string:find str end-marker)))
+          (cond
+            ((< section-end 0) str)
+            ((falsy? v) (substring str (+ section-end (length end-marker)) (length str)))
+            (else
+              (let* ((replace (substring str 0 (+ section-end (length end-marker))))
+                     (to-expand (substring replace (+ (length k) 5) (- (length replace) (length end-marker)))))
+                (string:substitute str replace (expand to-expand v))))))
+          str))
+        "{{#" str)))
+
+  (replace-inv-section (lambda (str values)
+    (each-occurrence (lambda (str)
+      (if (in? str "}}")
+        (let* ((k (substring str 3 (string:find str "}}")))
+               (v (_get values k))
+               (end-marker (++ "{{/" k "}}"))
+               (section-end (string:find str end-marker)))
+          (cond
+            ((< section-end 0) str)
+            ((truthy? v) (substring str (+ section-end (length end-marker)) (length str)))
+            (else
+              (let* ((replace (substring str 0 (+ section-end (length end-marker))))
+                     (with (substring replace (+ (length k) 5) (- (length replace) (length end-marker)))))
+                (string:substitute str replace with)))))
+          str))
+        "{{^" str)))
+
+  (replace-comment (lambda (str)
+    (each-occurrence (lambda (str)
+      (if (in? str "}}")
+        (let* ((i (string:find str "}}")))
+          (string:substitute
+            str
+            (substring str 0 (+ i 2))
+            ""))
+          str))
+        "{{!" str)))
+
+  (replace-partial (lambda (str values) str))
+
+  (replace-fun (lambda (str values) str))
+
+  (template (lambda (str values)
+    "takes the template string and a hashmap of values to interpolate.
+
+     The documentation of the mustache format can be found
+     <a href=\"https://mustache.github.io/mustache.5.html\">here</a>.
+
+     params:
+      - str: the template string
+      - values: a hashmap of substitute keys and values(keys and values must be strings)
+     complexity: O(n)
+     returns: the templated string"
+    (|>
+      (delay (replace-comment str))
+      (curry-flip replace-partial values)
+      (curry-flip replace-fun values)
+      (curry-flip replace-section values)
+      (curry-flip replace-inv-section values)
+      (curry-flip replace-unescaped values)
+      (curry-flip replace-normal values)))))
