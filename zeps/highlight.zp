@@ -61,9 +61,9 @@
             (else => 
               (lambda (char)
                 (if (char:num? char)
-                  (let* ((i (add1 (index-of (cdr str) #\space)))
-                         (j (index-of str #\)))
-                         (i (if (or (< i 0) (and (< j i) (> j -1))) j i))
+                  (let* ((i (apply min (filter (curry < -1)
+                                               (map (curry index-of (cdr str))
+                                                    [#\space #\tab #\) #\} #\] #\newline]))))
                          (hd (substring str 0 (add1 (if (> i 0) i (length str)))))
                          (tl (substring (cdr str) (if (> i 0) i (length str)) (length str))))
                     (loop tl (++ acc (orange) hd (col :reset))))
