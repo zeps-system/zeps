@@ -49,11 +49,12 @@ fi")
         (write (++ "zepto -s " (template name (++ name "/" (get-from lmod :entry-point "main.zp"))))
                file)
         (close-output-file file)
-        (let ((ret (car (system "ln" (list "-s" script (++ "/usr/local/bin/" (lmod :name)))))))
+        (let* ((path ((zeps:get-conf) :script-path))
+               (ret (car (system "ln" (list "-s" script (++ path (lmod :name)))))))
           (if (eq? ret 0)
             (system "chmod" (list "755" script))
             (begin
-              (system "sudo" (list "ln" "-s" script (++ "/usr/local/bin/" (lmod :name))))
+              (system "sudo" (list "ln" "-s" script (++ path (lmod :name))))
               (system "sudo" (list "chmod" "755" script)))))))))
 
   (_read-module (lambda (name)
@@ -146,6 +147,7 @@ fi")
   (conf
     (let* ((load-file (lambda (f) (if (file-exists? f) (load f) #{})))
            (initial (make-hash :install-home (++ (os:get-home-dir) "/.zeps/")
+                               :script-path "/usr/local/bin/"
                                :github-url "https://github.com/"
                                :with-time-stamp #f
                                :zpr-url "https://zpr.zepto.com/"))
